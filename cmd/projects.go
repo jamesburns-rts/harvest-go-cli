@@ -19,43 +19,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/time"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/pkg/errors"
-	"strconv"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"strconv"
 )
-
-var projectsFormat string
 
 var projectsCmd = &cobra.Command{
 	Use:   "projects",
 	Short: "List projects",
 	Long:  `List projects and their associated IDs`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		projectsFormat = strings.ToLower(projectsFormat)
 
 		// get projects
-		projects, err := time.GetProjects(ctx)
+		projects, err := harvest.GetProjects(ctx)
 		if err != nil {
 			return err
 		}
 
 		// print
-		if projectsFormat == formatSimple {
+		format := getOutputFormat()
+		if format == config.OutputFormatSimple {
 			for _, proj := range projects {
 				fmt.Printf("%v %v\n", proj.ID, proj.Name)
 			}
 
-		} else if projectsFormat == formatJson {
+		} else if format == config.OutputFormatJson {
 			b, err := json.MarshalIndent(projects, "", "  ")
 			if err != nil {
 				return errors.Wrap(err, "problem marshalling projects to json")
 			}
 			fmt.Println(string(b))
 
-		} else if projectsFormat == formatTable {
+		} else if format == config.OutputFormatTable {
 
 			table := createTable([]string{"ID", "Project Name"})
 			for _, proj := range projects {
@@ -66,7 +63,7 @@ var projectsCmd = &cobra.Command{
 			}
 			table.Render()
 		} else {
-			return errors.New("unrecognized --format " + tasksFormat)
+			return errors.New("unrecognized --format " + format)
 		}
 
 		return nil
@@ -75,5 +72,4 @@ var projectsCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(projectsCmd)
-	projectsCmd.Flags().StringVarP(&projectsFormat, "format", "f", formatTable, "Format of output "+formatOptions)
 }

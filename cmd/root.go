@@ -16,23 +16,66 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 var cfgFile string
+var outputFormat string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "harvest",
 	Short: "A commandline tool for all things Harvest Time Tracking",
 	Long:  `TODO - longer description`,
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+		summary, err := harvest.CalculateMonthSummary(time.Now(), ctx)
+		if err != nil {
+			return err
+		}
+
+		format := getOutputFormat()
+		if format == config.OutputFormatSimple {
+			fmt.Printf(`
+    Month Required Hours: %s
+    Month Logged Hours: %s
+
+    Month Billable Hours: %s (%0.1f%%)
+    Month NonBillable Hours: %s
+
+    Time worked: %s
+    Logged today: %s
+`,
+				formatHours(summary.RequiredHours),
+				formatHours(summary.MonthLoggedHours),
+				formatHours(summary.BillableHours),
+				100*summary.BillableHours/summary.MonthLoggedHours,
+				formatHours(summary.NonBillableHours),
+				formatHours(summary.WorkedTodayHours),
+				formatHours(summary.TodayLoggedHours),
+			)
+
+		} else if format == config.OutputFormatJson {
+			b, err := json.MarshalIndent(summary, "", "  ")
+			if err != nil {
+				return errors.Wrap(err, "problem marshalling projects to json")
+			}
+			fmt.Println(string(b))
+		}
+		return err
+	}),
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -54,6 +97,7 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.harvest.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", "Format of output "+outputFormatOptions)
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -99,9 +143,22 @@ func initConfig() {
 	}
 
 	config.Harvest = conf.Harvest
-
+	config.Cli = conf.Cli
+	config.Timers = conf.Timers
 }
 
 type viperConfig struct {
 	Harvest config.HarvestProperties
+	Cli     config.CliProperties
+	Timers  config.TimerRecords
+}
+
+func getOutputFormat() string {
+	if outputFormat != "" {
+		return strings.ToLower(outputFormat)
+	}
+	if config.Cli.DefaultOutputFormat != "" {
+		return config.Cli.DefaultOutputFormat
+	}
+	return config.OutputFormatTable
 }

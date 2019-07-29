@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"math"
 	"os"
 	"os/signal"
 )
@@ -34,7 +35,7 @@ func withCtx(f CobraFuncWithCtx) CobraFunc {
 	return func(cmd *cobra.Command, args []string) {
 		err := f(cmd, args, ctx)
 		if err != nil {
-			fmt.Printf("An error occurred: %v", err)
+			fmt.Printf("An error occurred: %v\n", err)
 		}
 
 		signal.Stop(c)
@@ -51,10 +52,11 @@ func createTable(columns []string) *tablewriter.Table {
 }
 
 const (
-	formatJson    = "json"
-	formatSimple  = "simple"
-	formatTable   = "table"
-	formatOptions = "[" + formatJson + ", " + formatSimple + ", " + formatTable + "]"
+	outputFormatOptions = "[" +
+		config.OutputFormatJson + ", " +
+		config.OutputFormatSimple + ", " +
+		config.OutputFormatTable +
+		"]"
 )
 
 func fileExists(fileName string) bool {
@@ -67,6 +69,8 @@ func fileExists(fileName string) bool {
 
 func writeConfig() error {
 	viper.Set("harvest", config.Harvest)
+	viper.Set("cli", config.Cli)
+	viper.Set("timers", config.Timers)
 
 	if !fileExists(cfgFile) {
 		f, err := os.Create(cfgFile)
@@ -83,4 +87,17 @@ func writeConfig() error {
 	}
 
 	return nil
+}
+
+func formatHours(hours float64) string {
+	if config.Cli.TimeDeltaFormat == config.TimeDeltaFormatHuman {
+		minutes := 60 * (hours - math.Floor(hours))
+		if hours < 1 {
+			return fmt.Sprintf("%0.0fm", minutes)
+		}
+		return fmt.Sprintf("%0.0fh %0.0fm", math.Floor(hours), minutes)
+	}
+
+	// else config.TimeDeltaFormatDecimal or other
+	return fmt.Sprintf("%0.2f", hours)
 }

@@ -14,6 +14,39 @@ func StartOfDay(t time.Time) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
 
+// StartOfDay gets the time at midnight on the first of the month
+func StartOfMonth(t time.Time) time.Time {
+	year, month, _ := t.Date()
+	return time.Date(year, month, 1, 0, 0, 0, 0, t.Location())
+}
+
+// WeekdaysBetween get the total number of workable weekdays in the month
+func WeekdaysBetween(start, stop time.Time) int {
+	if start.After(stop) {
+		start, stop = stop, start
+	}
+	totalDays := 0
+	for !SameDay(start, stop) {
+		switch start.Weekday() {
+		case time.Monday:
+		case time.Tuesday:
+		case time.Wednesday:
+		case time.Thursday:
+		case time.Friday:
+			totalDays++
+		}
+		start = start.AddDate(0, 0, 1)
+	}
+	return totalDays
+}
+
+// SameDay checks the two times are of the same day
+func SameDay(t1, t2 time.Time) bool {
+	year1, month1, date1 := t1.Date()
+	year2, month2, date2 := t2.Date()
+	return year1 == year2 && month1 == month2 && date1 == date2
+}
+
 // StringToDate takes a string of many forms and returns the parsed time
 // valid forms include:
 // * yyyy-mm-dd

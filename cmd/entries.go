@@ -19,14 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/time"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
 
-var entriesFormat string
 var entriesProject string
 var entriesTask string
 var entriesToDate string
@@ -39,11 +39,11 @@ var entriesCmd = &cobra.Command{
 	Long:    `List time entries you have entered already`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 		var err error
-		options := time.EntryListOptions{}
-		if options.ProjectId, err = time.GetProjectId(entriesProject); err != nil {
+		options := harvest.EntryListOptions{}
+		if options.ProjectId, err = harvest.GetProjectId(entriesProject); err != nil {
 			return errors.Wrap(err, "for --project: ")
 		}
-		if options.TaskId, err = time.GetTaskId(entriesTask); err != nil {
+		if options.TaskId, err = harvest.GetTaskId(entriesTask); err != nil {
 			return errors.Wrap(err, "for --task: ")
 		}
 		if options.To, err = util.StringToDate(entriesToDate); err != nil {
@@ -53,25 +53,27 @@ var entriesCmd = &cobra.Command{
 			return errors.Wrap(err, "for --from: ")
 		}
 
-		entries, err := time.GetEntries(&options, ctx)
+		entries, err := harvest.GetEntries(&options, ctx)
 		if err != nil {
 			return err
 		}
 
+
 		// print
-		if entriesFormat == formatSimple {
+		format := getOutputFormat()
+		if format == config.OutputFormatSimple {
 			for _, entry := range entries {
 				fmt.Printf("%v %v %v %s %0.2f %v\n", entry.ID, entry.Project.ID, entry.Task.ID, entry.Date, entry.Hours, entry.Notes)
 			}
 
-		} else if entriesFormat == formatJson {
+		} else if format == config.OutputFormatJson {
 			b, err := json.MarshalIndent(entries, "", "  ")
 			if err != nil {
 				return errors.Wrap(err, "problem marshalling entries to json")
 			}
 			fmt.Println(string(b))
 
-		} else if entriesFormat == formatTable {
+		} else if format == config.OutputFormatTable {
 			table := createTable([]string{"ID", "Project Name", "Date", "Task Name", "Hours", "Notes"})
 			for _, entry := range entries {
 
@@ -87,7 +89,7 @@ var entriesCmd = &cobra.Command{
 			table.Render()
 
 		} else {
-			return errors.New("unrecognized --format " + tasksFormat)
+			return errors.New("unrecognized --format " + format)
 		}
 
 		return nil
@@ -96,7 +98,6 @@ var entriesCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(entriesCmd)
-	entriesCmd.Flags().StringVarP(&entriesFormat, "format", "f", formatTable, "Format of output "+formatOptions)
 	entriesCmd.Flags().StringVarP(&entriesProject, "project", "p", "", "Project ID/alias by which to filter")
 	entriesCmd.Flags().StringVarP(&entriesTask, "task", "t", "", "Task ID/alias by which to filter")
 	entriesCmd.Flags().StringVar(&entriesToDate, "to", "", "Date by which to filter by entries on or before [see date section in root]")

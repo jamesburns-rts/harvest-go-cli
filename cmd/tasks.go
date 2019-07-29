@@ -19,46 +19,46 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/time"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
-	"strings"
 )
 
 var tasksProjectId string
-var tasksFormat string
 
 var tasksCmd = &cobra.Command{
 	Use:   "tasks",
 	Short: "List tasks of a project",
 	Long:  `For the given project, list the tasks with their associated IDs`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		tasksFormat = strings.ToLower(tasksFormat)
 
-		projectId, err := time.GetProjectId(tasksProjectId)
+		projectId, err := harvest.GetProjectId(tasksProjectId)
 		if err != nil {
 			return errors.Wrap(err, "for --project")
 		}
 
-		tasks, err := time.GetTasks(projectId, ctx)
+		tasks, err := harvest.GetTasks(projectId, ctx)
 		if err != nil {
 			return err
 		}
 
-		if tasksFormat == formatSimple {
+		// print
+		format := getOutputFormat()
+		if format == config.OutputFormatSimple {
 			for _, task := range tasks {
 				fmt.Printf("%v %v\n", task.ID, task.Name)
 			}
 
-		} else if tasksFormat == formatJson {
+		} else if format == config.OutputFormatJson {
 			b, err := json.MarshalIndent(tasks, "", "  ")
 			if err != nil {
 				return errors.Wrap(err, "problem marshalling projects to json")
 			}
 			fmt.Println(string(b))
 
-		} else if tasksFormat == formatTable {
+		} else if format == config.OutputFormatTable {
 
 			table := createTable([]string{"ID", "Task Name"})
 			for _, task := range tasks {
@@ -70,7 +70,7 @@ var tasksCmd = &cobra.Command{
 			table.Render()
 
 		} else {
-			return errors.New("unrecognized --format " + tasksFormat)
+			return errors.New("unrecognized --format " + format)
 		}
 		return nil
 	}),
@@ -79,5 +79,4 @@ var tasksCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(tasksCmd)
 	tasksCmd.Flags().StringVarP(&tasksProjectId, "project", "p", "", "ProjectID")
-	tasksCmd.Flags().StringVarP(&tasksFormat, "format", "f", formatTable, "Format of output "+formatOptions)
 }
