@@ -20,6 +20,6 @@ prof.mem
 
 *.iml
 
-harvest
+/harvest
 harvest-go-cli
 
