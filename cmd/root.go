@@ -41,7 +41,7 @@ var rootCmd = &cobra.Command{
 	Short: "A commandline tool for all things Harvest Time Tracking",
 	Long:  `TODO - longer description`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		summary, err := harvest.CalculateMonthSummary(time.Now(), ctx)
+		s, err := harvest.CalculateMonthSummary(time.Now(), ctx)
 		if err != nil {
 			return err
 		}
@@ -49,30 +49,41 @@ var rootCmd = &cobra.Command{
 		format := getOutputFormat()
 		if format == config.OutputFormatSimple {
 			fmt.Printf(`
-    Month Required Hours: %s
-    Month Logged Hours: %s
+    Month Required Hours: %v
+    Month Logged Hours: %v
 
-    Month Billable Hours: %s (%0.1f%%)
-    Month NonBillable Hours: %s
+    Month Billable Hours: %v (%0.1f%%)
+    Month NonBillable Hours: %v
 
-    Time worked: %s
-    Logged today: %s
+    Time worked: %v
+    Logged today: %v
 `,
-				formatHours(summary.RequiredHours),
-				formatHours(summary.MonthLoggedHours),
-				formatHours(summary.BillableHours),
-				100*summary.BillableHours/summary.MonthLoggedHours,
-				formatHours(summary.NonBillableHours),
-				formatHours(summary.WorkedTodayHours),
-				formatHours(summary.TodayLoggedHours),
+				s.RequiredHours,
+				s.MonthLoggedHours,
+				s.BillableHours,
+				100*s.BillableHours/s.MonthLoggedHours,
+				s.NonBillableHours,
+				s.WorkedTodayHours,
+				s.TodayLoggedHours,
 			)
 
 		} else if format == config.OutputFormatJson {
-			b, err := json.MarshalIndent(summary, "", "  ")
+			b, err := json.MarshalIndent(s, "", "  ")
 			if err != nil {
 				return errors.Wrap(err, "problem marshalling projects to json")
 			}
 			fmt.Println(string(b))
+		} else if format == config.OutputFormatTable {
+			table := createTable(nil)
+			table.AppendBulk([][]string{
+				{"Month Required Hours", s.RequiredHours.String()},
+				{"Month Logged Hours", s.MonthLoggedHours.String()},
+				{"Month Billable Hours", fmt.Sprintf("%v (%0.1f%%)", s.BillableHours, 100*s.BillableHours/s.MonthLoggedHours)},
+				{"Month NonBillable Hours", s.NonBillableHours.String()},
+				{"Time worked", s.WorkedTodayHours.String()},
+				{"Logged today", s.TodayLoggedHours.String()},
+			})
+			table.Render()
 		}
 		return err
 	}),

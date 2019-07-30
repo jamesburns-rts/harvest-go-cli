@@ -54,14 +54,14 @@ var setCmd = &cobra.Command{
 			}
 		}
 		if setCliArgs.TimeDeltaFormat != "" {
-			setCliArgs.DefaultOutputFormat = strings.ToLower(setCliArgs.DefaultOutputFormat)
-			switch setCliArgs.DefaultOutputFormat {
+			setCliArgs.TimeDeltaFormat = strings.ToLower(setCliArgs.TimeDeltaFormat)
+			switch setCliArgs.TimeDeltaFormat {
 			case config.TimeDeltaFormatHuman:
 				fallthrough
 			case config.TimeDeltaFormatDecimal:
 				config.Cli.TimeDeltaFormat = setCliArgs.TimeDeltaFormat
 			default:
-				return errors.New("Invalid time format given")
+				return errors.New("Invalid time format given " + setCliArgs.TimeDeltaFormat)
 			}
 		}
 

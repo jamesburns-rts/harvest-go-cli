@@ -26,7 +26,7 @@ type (
 
 	Entry struct {
 		Date    string  `json:"date"`
-		Hours   float64 `json:"hours"`
+		Hours   Hours   `json:"hours"`
 		ID      int64   `json:"id"`
 		Notes   string  `json:"notes"`
 		Project Project `json:"project"`
@@ -193,7 +193,7 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 
 			entry := Entry{
 				ID:    *e.Id,
-				Hours: *e.Hours,
+				Hours: Hours(*e.Hours),
 				Date:  (*e.SpentDate).String(),
 				Project: Project{
 					ID:   *e.Project.Id,
@@ -205,7 +205,7 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 				},
 			}
 			if e.Hours != nil {
-				entry.Hours = *e.Hours
+				entry.Hours = Hours(*e.Hours)
 			}
 			if e.Notes != nil {
 				entry.Notes = *e.Notes

@@ -82,7 +82,7 @@ var entriesCmd = &cobra.Command{
 					entry.Project.Name,
 					entry.Date,
 					entry.Task.Name,
-					fmt.Sprintf("%0.2f", entry.Hours),
+					entry.Hours.String(),
 					entry.Notes,
 				})
 			}

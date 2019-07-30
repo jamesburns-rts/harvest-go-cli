@@ -47,7 +47,9 @@ func withCtx(f CobraFuncWithCtx) CobraFunc {
 func createTable(columns []string) *tablewriter.Table {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetColWidth(150)
-	table.SetHeader(columns)
+	if columns != nil {
+		table.SetHeader(columns)
+	}
 	return table
 }
 

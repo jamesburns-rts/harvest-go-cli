@@ -7,17 +7,6 @@ import (
 	"time"
 )
 
-type (
-	MonthSummary struct {
-		RequiredHours    float64
-		MonthLoggedHours float64
-		BillableHours    float64
-		NonBillableHours float64
-		WorkedTodayHours float64
-		TodayLoggedHours float64
-	}
-)
-
 func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, error) {
 
 	startOfMonth := util.StartOfMonth(t)
@@ -34,7 +23,7 @@ func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, erro
 	weekDays := util.WeekdaysBetween(startOfMonth, startOfNextMonth)
 
 	summary := MonthSummary{
-		RequiredHours: float64(8 * weekDays),
+		RequiredHours: Hours(8 * weekDays),
 	}
 
 	for _, e := range entries {
@@ -57,7 +46,7 @@ func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, erro
 
 	arrived := config.Timers.ArrivedTime()
 	if arrived != nil && util.SameDay(*arrived, time.Now()) {
-		summary.TodayLoggedHours = time.Now().Sub(*arrived).Hours()
+		summary.TodayLoggedHours = Hours(time.Now().Sub(*arrived).Hours())
 	}
 
 	return summary, nil
