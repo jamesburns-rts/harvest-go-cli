@@ -72,7 +72,7 @@ func fileExists(fileName string) bool {
 func writeConfig() error {
 	viper.Set("harvest", config.Harvest)
 	viper.Set("cli", config.Cli)
-	viper.Set("timers", config.Timers)
+	viper.Set("tracking", config.Tracking)
 
 	if !fileExists(cfgFile) {
 		f, err := os.Create(cfgFile)

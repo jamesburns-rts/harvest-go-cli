@@ -7,19 +7,26 @@ import (
 
 type (
 	HarvestProperties struct {
-		AccessToken    string           `yaml:"accessToken"json:"accessToken"`
-		AccountId      string           `yaml:"accountId"json:"accessToken"`
-		ProjectAliases map[string]int64 `yaml:"projectAliases"json:"projectAliases"`
-		TaskAliases    map[string]int64 `yaml:"taskAliases"json:"taskAliases"`
+		AccessToken    string           `yaml,json:"accessToken"`
+		AccountId      string           `yaml,json:"accountId"`
+		ProjectAliases map[string]int64 `yaml,json:"projectAliases"`
+		TaskAliases    map[string]int64 `yaml,json:"taskAliases"`
+		SyncTimers     *bool            `yaml,json:"syncTimers"`
 	}
 
 	CliProperties struct {
-		TimeDeltaFormat     string
-		DefaultOutputFormat string
+		TimeDeltaFormat     string `yaml,json:"timeDeltaFormat"`
+		DefaultOutputFormat string `yaml,json:"defaultOutputFormat"`
+		DisplayAliases      *bool `yaml,json:"displayAliases"`
 	}
 
-	TimerRecords struct {
-		Arrived string `yaml:"arrived"json:"arrived"`
+	Timer struct {
+		Name string `yaml,json:"name"`
+	}
+
+	TrackingRecords struct {
+		Arrived string  `yaml,json:"arrived"`
+		Timers  []Timer `yaml,json:"timers"`
 	}
 )
 
@@ -34,13 +41,13 @@ const (
 
 var Harvest HarvestProperties
 var Cli CliProperties
-var Timers TimerRecords
+var Tracking TrackingRecords
 
-func (r *TimerRecords) SetArrived(t time.Time) {
+func (r *TrackingRecords) SetArrived(t time.Time) {
 	r.Arrived = t.Format(time.RFC3339)
 }
 
-func (r *TimerRecords) ArrivedTime() *time.Time {
+func (r *TrackingRecords) ArrivedTime() *time.Time {
 	if r.Arrived == "" {
 		return nil
 	}

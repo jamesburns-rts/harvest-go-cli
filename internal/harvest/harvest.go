@@ -2,8 +2,10 @@ package harvest
 
 import (
 	"context"
-	"github.com/becoded/go-harvest/harvest"
+	//"github.com/becoded/go-harvest/harvest"
+	"github.com/jamesburns-rts/go-harvest/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"log"
@@ -38,6 +40,7 @@ type (
 		From      *time.Time
 		ProjectId *int64
 		TaskId    *int64
+		Running   *bool
 	}
 )
 
@@ -220,6 +223,16 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 	return entries, nil
 }
 
+func GetTimers(o *EntryListOptions, ctx context.Context) (entries []Entry, err error) {
+
+	if o == nil {
+		o = &EntryListOptions{}
+	}
+	o.Running = BoolPtr(true)
+
+	return GetEntries(o, ctx)
+}
+
 func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 	var options harvest.TimeEntryListOptions
 	options.PerPage = 100
@@ -234,9 +247,9 @@ func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 	if o.From != nil {
 		options.From = &harvest.Date{Time: *o.From}
 	}
-	if o.ProjectId != nil {
-		options.ProjectId = o.ProjectId
-	}
+
+	options.ProjectId = o.ProjectId
+	options.IsRunning = o.Running
 
 	return options
 }

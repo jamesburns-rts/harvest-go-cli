@@ -64,6 +64,10 @@ var setCmd = &cobra.Command{
 				return errors.New("Invalid time format given " + setCliArgs.TimeDeltaFormat)
 			}
 		}
+		if cmd.Flags().Changed("display-aliases") {
+			fmt.Println("here")
+			config.Cli.DisplayAliases = setCliArgs.DisplayAliases
+		}
 
 		return writeConfig()
 	}),
@@ -89,6 +93,8 @@ func init() {
 		"Default output format "+outputFormatOptions)
 	setCmd.Flags().StringVar(&setCliArgs.TimeDeltaFormat, "time-format", "",
 		fmt.Sprintf("Default output format [%s, %s]", config.TimeDeltaFormatDecimal, config.TimeDeltaFormatHuman))
+
+	setCliArgs.DisplayAliases = setCmd.Flags().Bool("display-aliases", false, "Harvest API account ID")
 
 	setCmd.AddCommand(timeSetProjectAliasCmd)
 	timeSetProjectAliasCmd.AddCommand(projectsAliasCmd)

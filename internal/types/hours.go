@@ -1,9 +1,10 @@
-package harvest
+package types
 
 import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"math"
+	"strings"
 )
 
 type (
@@ -35,5 +36,7 @@ func (h Hours) String() string {
 	}
 
 	// else config.TimeDeltaFormatDecimal or other
-	return fmt.Sprintf("%0.2f", float64(h))
+	str := fmt.Sprintf("%0.2f", float64(h))
+	str = strings.TrimRight(str, "0")
+	return strings.TrimRight(str, ".")
 }

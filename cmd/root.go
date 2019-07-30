@@ -155,13 +155,13 @@ func initConfig() {
 
 	config.Harvest = conf.Harvest
 	config.Cli = conf.Cli
-	config.Timers = conf.Timers
+	config.Tracking = conf.Timers
 }
 
 type viperConfig struct {
 	Harvest config.HarvestProperties
 	Cli     config.CliProperties
-	Timers  config.TimerRecords
+	Timers  config.TrackingRecords
 }
 
 func getOutputFormat() string {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strings"
@@ -20,8 +21,8 @@ var arrivedCmd = &cobra.Command{
 			return errors.New("expected time format of hh:mm")
 		}
 
-		config.Timers.SetArrived(t)
-		fmt.Printf("Marking time arrived as %s\n", config.Timers.Arrived)
+		config.Tracking.SetArrived(t)
+		fmt.Printf("Marking time arrived as %s\n", formatArrived(t))
 		return writeConfig()
 	}),
 }
@@ -49,4 +50,12 @@ func parseTime(args []string) (t time.Time, err error) {
 	}
 
 	return t, nil
+}
+
+func formatArrived(t time.Time) string {
+	if util.SameDay(t, time.Now()) {
+		return t.Format(time.Kitchen)
+	} else {
+		return t.Format("Mon Jan _2 3:04PM")
+	}
 }
