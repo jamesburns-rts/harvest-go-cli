@@ -42,6 +42,13 @@ type (
 		TaskId    *int64
 		Running   *bool
 	}
+
+	LogTimeOptions struct {
+		TaskId int64
+		Date   time.Time
+		Hours  Hours
+		Notes  string
+	}
 )
 
 func createClient(ctx context.Context) (*harvest.HarvestClient, error) {
@@ -74,8 +81,8 @@ func GetProjectId(str string) (*int64, error) {
 		return nil, nil
 	}
 
-	if taskId, ok := config.Harvest.ProjectAliases[str]; ok {
-		return &taskId, nil
+	if projectAlias, ok := config.Harvest.ProjectAliases[str]; ok {
+		return &projectAlias.ProjectId, nil
 	}
 
 	i, err := strconv.ParseInt(str, 10, 64)
@@ -91,8 +98,8 @@ func GetTaskId(str string) (*int64, error) {
 		return nil, nil
 	}
 
-	if taskId, ok := config.Harvest.TaskAliases[str]; ok {
-		return &taskId, nil
+	if taskAlias, ok := config.Harvest.TaskAliases[str]; ok {
+		return &taskAlias.TaskId, nil
 	}
 
 	i, err := strconv.ParseInt(str, 10, 64)
@@ -194,27 +201,7 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 				continue
 			}
 
-			entry := Entry{
-				ID:    *e.Id,
-				Hours: Hours(*e.Hours),
-				Date:  (*e.SpentDate).String(),
-				Project: Project{
-					ID:   *e.Project.Id,
-					Name: *e.Project.Name,
-				},
-				Task: Task{
-					ID:   *e.Task.Id,
-					Name: *e.Task.Name,
-				},
-			}
-			if e.Hours != nil {
-				entry.Hours = Hours(*e.Hours)
-			}
-			if e.Notes != nil {
-				entry.Notes = *e.Notes
-			}
-
-			entries = append(entries, entry)
+			entries = append(entries, convertEntry(*e))
 		}
 
 		lastPage = *page.TotalPages - 1
@@ -231,6 +218,72 @@ func GetTimers(o *EntryListOptions, ctx context.Context) (entries []Entry, err e
 	o.Running = BoolPtr(true)
 
 	return GetEntries(o, ctx)
+}
+
+func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating client")
+	}
+
+	options, err := o.toHarvestOptions(ctx)
+	if err != nil {
+		return Entry{}, err
+	}
+
+	entry, _, err := client.Timesheet.CreateTimeEntryViaDuration(ctx, &options)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating time entry")
+	}
+
+	return convertEntry(*entry), nil
+}
+
+func GetTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
+
+	// check alias first
+	for _, alias := range config.Harvest.TaskAliases {
+		if alias.TaskId == taskId {
+			return &alias.ProjectId, nil
+		}
+	}
+
+	// get projects from API
+	projects, err := GetProjects(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "problem getting projects for taskId")
+	}
+	for _, p := range projects {
+		for _, t := range p.Tasks {
+			if t.ID == taskId {
+				return &p.ID, nil
+			}
+		}
+	}
+	return nil, errors.New("no project found for task id")
+}
+
+func convertEntry(e harvest.TimeEntry) Entry {
+	entry := Entry{
+		ID:    *e.Id,
+		Hours: Hours(*e.Hours),
+		Date:  (*e.SpentDate).String(),
+		Project: Project{
+			ID:   *e.Project.Id,
+			Name: *e.Project.Name,
+		},
+		Task: Task{
+			ID:   *e.Task.Id,
+			Name: *e.Task.Name,
+		},
+	}
+	if e.Hours != nil {
+		entry.Hours = Hours(*e.Hours)
+	}
+	if e.Notes != nil {
+		entry.Notes = *e.Notes
+	}
+	return entry
 }
 
 func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
@@ -252,6 +305,29 @@ func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 	options.IsRunning = o.Running
 
 	return options
+}
+
+func (o LogTimeOptions) toHarvestOptions(ctx context.Context) (harvest.TimeEntryCreateViaDuration, error) {
+
+	projectId, err := GetTaskProjectId(o.TaskId, ctx)
+	if err != nil {
+		return harvest.TimeEntryCreateViaDuration{}, err
+	}
+
+	var notes *string
+	if o.Notes != "" {
+		notes = &o.Notes
+	}
+
+	hours := float64(o.Hours)
+
+	return harvest.TimeEntryCreateViaDuration{
+		ProjectId: projectId,
+		TaskId:    &o.TaskId,
+		SpentDate: &harvest.Date{Time: o.Date},
+		Hours:     &hours,
+		Notes:     notes,
+	}, nil
 }
 
 func (o *EntryListOptions) includeTask(taskId *int64) bool {

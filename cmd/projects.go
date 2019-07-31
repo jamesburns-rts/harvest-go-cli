@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
@@ -46,11 +45,7 @@ var projectsCmd = &cobra.Command{
 			}
 
 		} else if format == config.OutputFormatJson {
-			b, err := json.MarshalIndent(projects, "", "  ")
-			if err != nil {
-				return errors.Wrap(err, "problem marshalling projects to json")
-			}
-			fmt.Println(string(b))
+			return outputJson(projects)
 
 		} else if format == config.OutputFormatTable {
 

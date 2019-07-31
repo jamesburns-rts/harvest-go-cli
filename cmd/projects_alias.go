@@ -35,7 +35,9 @@ var projectsAliasCmd = &cobra.Command{
 			return errors.Wrap(err, "for ProjectID")
 		}
 		alias := args[1]
-		config.Harvest.ProjectAliases[alias] = projectId
+		config.Harvest.ProjectAliases[alias] = config.ProjectAlias{
+			ProjectId: projectId,
+		}
 
 		return writeConfig()
 	}),

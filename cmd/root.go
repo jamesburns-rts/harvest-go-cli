@@ -17,12 +17,10 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -68,11 +66,8 @@ var rootCmd = &cobra.Command{
 			)
 
 		} else if format == config.OutputFormatJson {
-			b, err := json.MarshalIndent(s, "", "  ")
-			if err != nil {
-				return errors.Wrap(err, "problem marshalling projects to json")
-			}
-			fmt.Println(string(b))
+			return outputJson(s)
+
 		} else if format == config.OutputFormatTable {
 			table := createTable(nil)
 			table.AppendBulk([][]string{
@@ -148,10 +143,10 @@ func initConfig() {
 
 	// initialize maps and things
 	if conf.Harvest.ProjectAliases == nil {
-		conf.Harvest.ProjectAliases = make(map[string]int64)
+		conf.Harvest.ProjectAliases = make(map[string]config.ProjectAlias)
 	}
 	if conf.Harvest.TaskAliases == nil {
-		conf.Harvest.TaskAliases = make(map[string]int64)
+		conf.Harvest.TaskAliases = make(map[string]config.TaskAlias)
 	}
 
 	config.Harvest = conf.Harvest

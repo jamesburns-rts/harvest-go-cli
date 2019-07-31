@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/pkg/errors"
@@ -39,16 +38,16 @@ var tasksAliasesCmd = &cobra.Command{
 			}
 
 		} else if format == config.OutputFormatJson {
-			b, err := json.MarshalIndent(aliases, "", "  ")
-			if err != nil {
-				return errors.Wrap(err, "problem marshalling aliases to json")
-			}
-			fmt.Println(string(b))
+			return outputJson(aliases)
 
 		} else if format == config.OutputFormatTable {
-			table := createTable([]string{"Alias", "TaskId"})
+			table := createTable([]string{"Alias", "ProjectId", "TaskId"})
 			for k, v := range aliases {
-				table.Append([]string{k, strconv.Itoa(int(v))})
+				table.Append([]string{
+					k,
+					strconv.Itoa(int(v.ProjectId)),
+					strconv.Itoa(int(v.TaskId)),
+				})
 			}
 			table.Render()
 		} else {

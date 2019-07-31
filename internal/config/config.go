@@ -9,11 +9,20 @@ import (
 
 type (
 	HarvestProperties struct {
-		AccessToken    string           `yaml,json:"accessToken"`
-		AccountId      string           `yaml,json:"accountId"`
-		ProjectAliases map[string]int64 `yaml,json:"projectAliases"`
-		TaskAliases    map[string]int64 `yaml,json:"taskAliases"`
-		SyncTimers     *bool            `yaml,json:"syncTimers"`
+		AccessToken    string                  `yaml,json:"accessToken"`
+		AccountId      string                  `yaml,json:"accountId"`
+		ProjectAliases map[string]ProjectAlias `yaml,json:"projectAliases"`
+		TaskAliases    map[string]TaskAlias    `yaml,json:"taskAliases"`
+		SyncTimers     *bool                   `yaml,json:"syncTimers"`
+	}
+
+	ProjectAlias struct {
+		ProjectId int64 `yaml,json:"projectId"`
+	}
+
+	TaskAlias struct {
+		TaskId    int64 `yaml,json:"taskId"`
+		ProjectId int64 `yaml,json:"projectId"`
 	}
 
 	CliProperties struct {

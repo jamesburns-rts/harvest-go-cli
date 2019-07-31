@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
@@ -35,7 +36,15 @@ var tasksAliasCmd = &cobra.Command{
 			return errors.Wrap(err, "for [taskID]")
 		}
 		alias := args[1]
-		config.Harvest.TaskAliases[alias] = taskId
+
+		projectId, err := harvest.GetTaskProjectId(taskId, ctx)
+		if err != nil {
+			return errors.Wrap(err, "error getting task project")
+		}
+		config.Harvest.TaskAliases[alias] = config.TaskAlias{
+			TaskId:    taskId,
+			ProjectId: *projectId,
+		}
 
 		return writeConfig()
 	}),

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/olekukonko/tablewriter"
@@ -51,6 +52,15 @@ func createTable(columns []string) *tablewriter.Table {
 		table.SetHeader(columns)
 	}
 	return table
+}
+
+func outputJson(v interface{}) error {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return errors.Wrap(err, "problem marshalling data to json")
+	}
+	fmt.Println(string(b))
+	return nil
 }
 
 func fileExists(fileName string) bool {
