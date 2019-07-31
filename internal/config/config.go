@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
+	"strings"
 	"time"
 )
 
@@ -17,7 +19,7 @@ type (
 	CliProperties struct {
 		TimeDeltaFormat     string `yaml,json:"timeDeltaFormat"`
 		DefaultOutputFormat string `yaml,json:"defaultOutputFormat"`
-		DisplayAliases      *bool `yaml,json:"displayAliases"`
+		IdDisplay           string `yaml,json:"displayAliases"`
 	}
 
 	Timer struct {
@@ -28,15 +30,6 @@ type (
 		Arrived string  `yaml,json:"arrived"`
 		Timers  []Timer `yaml,json:"timers"`
 	}
-)
-
-const (
-	TimeDeltaFormatDecimal = "decimal"
-	TimeDeltaFormatHuman   = "human"
-
-	OutputFormatJson   = "json"
-	OutputFormatSimple = "simple"
-	OutputFormatTable  = "table"
 )
 
 var Harvest HarvestProperties
@@ -59,4 +52,34 @@ func (r *TrackingRecords) ArrivedTime() *time.Time {
 	}
 
 	return &t
+}
+
+type Options []string
+
+const (
+	TimeDeltaFormatDecimal = "decimal"
+	TimeDeltaFormatHuman   = "human"
+
+	OutputFormatJson   = "json"
+	OutputFormatSimple = "simple"
+	OutputFormatTable  = "table"
+)
+
+var OutputFormatOptions = Options{
+	OutputFormatJson,
+	OutputFormatSimple,
+	OutputFormatTable,
+}
+
+var TimeDeltaFormatOptions = Options{
+	TimeDeltaFormatDecimal,
+	TimeDeltaFormatHuman,
+}
+
+func (o Options) String() string {
+	return fmt.Sprintf("[%s]", strings.Join([]string(o), ", "))
+}
+
+func (o Options) Contains(str string) (string, bool) {
+	return util.ContainsIgnoreCase([]string(o), str)
 }

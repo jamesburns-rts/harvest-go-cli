@@ -53,14 +53,6 @@ func createTable(columns []string) *tablewriter.Table {
 	return table
 }
 
-const (
-	outputFormatOptions = "[" +
-		config.OutputFormatJson + ", " +
-		config.OutputFormatSimple + ", " +
-		config.OutputFormatTable +
-		"]"
-)
-
 func fileExists(fileName string) bool {
 	info, err := os.Stat(fileName)
 	if os.IsNotExist(err) {

@@ -8,6 +8,17 @@ import (
 	"time"
 )
 
+type (
+	MonthSummary struct {
+		RequiredHours    Hours
+		MonthLoggedHours Hours
+		BillableHours    Hours
+		NonBillableHours Hours
+		WorkedTodayHours Hours
+		TodayLoggedHours Hours
+	}
+)
+
 func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, error) {
 
 	startOfMonth := util.StartOfMonth(t)

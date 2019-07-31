@@ -21,7 +21,6 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 // settable values
@@ -40,33 +39,21 @@ var setCmd = &cobra.Command{
 		if setHarvestArgs.AccessToken != "" {
 			config.Harvest.AccessToken = setHarvestArgs.AccessToken
 		}
+
 		if setCliArgs.DefaultOutputFormat != "" {
-			setCliArgs.DefaultOutputFormat = strings.ToLower(setCliArgs.DefaultOutputFormat)
-			switch setCliArgs.DefaultOutputFormat {
-			case config.OutputFormatTable:
-				fallthrough
-			case config.OutputFormatJson:
-				fallthrough
-			case config.OutputFormatSimple:
-				config.Cli.DefaultOutputFormat = setCliArgs.DefaultOutputFormat
-			default:
+			if option, ok := config.OutputFormatOptions.Contains(setCliArgs.DefaultOutputFormat); ok {
+				config.Cli.DefaultOutputFormat = option
+			} else {
 				return errors.New("Invalid output format given")
 			}
 		}
+
 		if setCliArgs.TimeDeltaFormat != "" {
-			setCliArgs.TimeDeltaFormat = strings.ToLower(setCliArgs.TimeDeltaFormat)
-			switch setCliArgs.TimeDeltaFormat {
-			case config.TimeDeltaFormatHuman:
-				fallthrough
-			case config.TimeDeltaFormatDecimal:
-				config.Cli.TimeDeltaFormat = setCliArgs.TimeDeltaFormat
-			default:
-				return errors.New("Invalid time format given " + setCliArgs.TimeDeltaFormat)
+			if option, ok := config.TimeDeltaFormatOptions.Contains(setCliArgs.TimeDeltaFormat); ok {
+				config.Cli.TimeDeltaFormat = option
+			} else {
+				return errors.New("Invalid time format given")
 			}
-		}
-		if cmd.Flags().Changed("display-aliases") {
-			fmt.Println("here")
-			config.Cli.DisplayAliases = setCliArgs.DisplayAliases
 		}
 
 		return writeConfig()
@@ -89,12 +76,11 @@ func init() {
 	rootCmd.AddCommand(setCmd)
 	setCmd.Flags().StringVar(&setHarvestArgs.AccessToken, "harvest-access-token", "", "Harvest API Access token")
 	setCmd.Flags().StringVar(&setHarvestArgs.AccountId, "harvest-account-id", "", "Harvest API account ID")
-	setCmd.Flags().StringVar(&setCliArgs.DefaultOutputFormat, "default-output-format", "",
-		"Default output format "+outputFormatOptions)
-	setCmd.Flags().StringVar(&setCliArgs.TimeDeltaFormat, "time-format", "",
-		fmt.Sprintf("Default output format [%s, %s]", config.TimeDeltaFormatDecimal, config.TimeDeltaFormatHuman))
+	setCmd.Flags().StringVar(&setCliArgs.DefaultOutputFormat, "default-output-format", "", fmt.Sprintf(
+		"Default output format %v", config.OutputFormatOptions))
 
-	setCliArgs.DisplayAliases = setCmd.Flags().Bool("display-aliases", false, "Harvest API account ID")
+	setCmd.Flags().StringVar(&setCliArgs.TimeDeltaFormat, "time-format", "", fmt.Sprintf(
+		"Default time delta format %s", config.TimeDeltaFormatOptions))
 
 	setCmd.AddCommand(timeSetProjectAliasCmd)
 	timeSetProjectAliasCmd.AddCommand(projectsAliasCmd)

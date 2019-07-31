@@ -58,7 +58,6 @@ var entriesCmd = &cobra.Command{
 			return err
 		}
 
-
 		// print
 		format := getOutputFormat()
 		if format == config.OutputFormatSimple {

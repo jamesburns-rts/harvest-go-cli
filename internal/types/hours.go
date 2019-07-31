@@ -7,17 +7,7 @@ import (
 	"strings"
 )
 
-type (
-	Hours float64
-	MonthSummary struct {
-		RequiredHours    Hours
-		MonthLoggedHours Hours
-		BillableHours    Hours
-		NonBillableHours Hours
-		WorkedTodayHours Hours
-		TodayLoggedHours Hours
-	}
-)
+type Hours float64
 
 func (h Hours) Minutes() float64 {
 	return 60 * (float64(h) - h.Hours())
