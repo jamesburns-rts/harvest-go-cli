@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
+	"time"
 )
 
 var entriesProject string
@@ -32,7 +33,7 @@ var entriesToDate string
 var entriesFromDate string
 
 var entriesCmd = &cobra.Command{
-	Use:     "entries",
+	Use:     "entries [date]",
 	Aliases: []string{"list"},
 	Short:   "List time entries",
 	Long:    `List time entries you have entered already`,
@@ -50,6 +51,14 @@ var entriesCmd = &cobra.Command{
 		}
 		if options.From, err = util.StringToDate(entriesFromDate); err != nil {
 			return errors.Wrap(err, "for --from: ")
+		}
+		if len(args) > 0 {
+			var onDate *time.Time
+			if onDate, err = util.StringToDate(args[0]); err != nil {
+				return errors.Wrap(err, "for [date]: ")
+			}
+			options.From = onDate
+			options.To = onDate
 		}
 
 		entries, err := harvest.GetEntries(&options, ctx)
