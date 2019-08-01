@@ -33,41 +33,45 @@ var entriesToDate string
 var entriesFromDate string
 
 var entriesCmd = &cobra.Command{
-	Use:     "entries [date]",
-	Aliases: []string{"list"},
-	Short:   "List time entries",
-	Long:    `List time entries you have entered already`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		var err error
-		options := harvest.EntryListOptions{}
+	Use:   "entries [date]",
+	Args:  cobra.MaximumNArgs(1),
+	Short: "List time entries",
+	Long:  `List time entries you have entered already`,
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
+
+		var options harvest.EntryListOptions
+
+		// gather inputs
 		if options.To, err = util.StringToDate(entriesToDate); err != nil {
-			return errors.Wrap(err, "for --to: ")
+			return errors.Wrap(err, "for --to")
 		}
 		if options.From, err = util.StringToDate(entriesFromDate); err != nil {
-			return errors.Wrap(err, "for --from: ")
+			return errors.Wrap(err, "for --from")
 		}
 		if options.TaskId, options.ProjectId, err = getTaskAndProjectId(entriesTask); err != nil {
-			return errors.Wrap(err, "for --task: ")
+			return errors.Wrap(err, "for --task")
 		}
 		if entriesProject != "" {
 			if options.ProjectId, err = harvest.GetProjectId(entriesProject); err != nil {
-				return errors.Wrap(err, "for --project: ")
+				return errors.Wrap(err, "for --project")
 			}
 		}
 		if len(args) > 0 {
 			var onDate *time.Time
 			if onDate, err = util.StringToDate(args[0]); err != nil {
-				return errors.Wrap(err, "for [date]: ")
+				return errors.Wrap(err, "for [date]")
 			}
 			options.From = onDate
 			options.To = onDate
 		}
 
+		// get entries
 		entries, err := harvest.GetEntries(&options, ctx)
 		if err != nil {
 			return err
 		}
 
+		// print
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return entriesOutputSimple(entries) },
 			config.OutputFormatTable:  func() error { return entriesOutputTable(entries) },

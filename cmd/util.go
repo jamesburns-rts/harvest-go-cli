@@ -7,6 +7,7 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -77,7 +78,7 @@ func fileExists(fileName string) bool {
 func writeConfig() error {
 	viper.Set("harvest", config.Harvest)
 	viper.Set("cli", config.Cli)
-	viper.Set("tracking", config.Tracking)
+	viper.Set("tracking", timers.Records)
 
 	if !fileExists(cfgFile) {
 		f, err := os.Create(cfgFile)

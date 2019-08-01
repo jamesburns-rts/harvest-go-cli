@@ -28,12 +28,14 @@ type (
 	}
 
 	Entry struct {
-		Date    string  `json:"date"`
-		Hours   Hours   `json:"hours"`
-		ID      int64   `json:"id"`
-		Notes   string  `json:"notes"`
-		Project Project `json:"project"`
-		Task    Task    `json:"task"`
+		Date         string     `json:"date"`
+		Hours        Hours      `json:"hours"`
+		ID           int64      `json:"id"`
+		Notes        string     `json:"notes"`
+		Project      Project    `json:"project"`
+		Task         Task       `json:"task"`
+		Running      bool       `json:"running"`
+		TimerStarted *time.Time `json:"timerStarted"`
 	}
 
 	EntryListOptions struct {
@@ -196,6 +198,16 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 	return entries, nil
 }
 
+func DeleteEntry(entryId int64, ctx context.Context) error {
+	client, err := createClient(ctx)
+	if err != nil {
+		return errors.Wrap(err, "creating client")
+	}
+
+	_, err = client.Timesheet.DeleteTimeEntry(ctx, entryId)
+	return err
+}
+
 func GetTimers(o *EntryListOptions, ctx context.Context) (entries []Entry, err error) {
 
 	if o == nil {
@@ -225,11 +237,26 @@ func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
 	return convertEntry(*entry), nil
 }
 
+func RestartTimeEntry(timeEntryId int64, ctx context.Context) (Entry, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating client")
+	}
+
+	entry, _, err := client.Timesheet.RestartTimeEntry(ctx, timeEntryId)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "restarting time entry")
+	}
+
+	return convertEntry(*entry), nil
+}
+
 func convertEntry(e harvest.TimeEntry) Entry {
 	entry := Entry{
-		ID:    *e.Id,
-		Hours: Hours(*e.Hours),
-		Date:  (*e.SpentDate).String(),
+		ID:      *e.Id,
+		Hours:   Hours(*e.Hours),
+		Date:    (*e.SpentDate).String(),
+		Running: *e.IsRunning,
 		Project: Project{
 			ID:   *e.Project.Id,
 			Name: *e.Project.Name,
@@ -245,6 +272,9 @@ func convertEntry(e harvest.TimeEntry) Entry {
 	}
 	if e.Notes != nil {
 		entry.Notes = *e.Notes
+	}
+	if e.StartedTime != nil {
+		entry.TimerStarted = &e.StartedTime.Time
 	}
 	return entry
 }

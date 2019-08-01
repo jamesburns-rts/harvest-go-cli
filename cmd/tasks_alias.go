@@ -31,18 +31,21 @@ var tasksAliasCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Short: "Alias a task ID",
 	Long:  `Alias a task ID to a friendly string the can be used anywhere`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		taskId, err := strconv.ParseInt(args[0], 10, 64)
-		if err != nil {
+		var taskId int64
+		var alias string
+		var projectId *int64
+
+		// gather inputs
+		if taskId, err = strconv.ParseInt(args[0], 10, 64); err != nil {
 			return errors.Wrap(err, "for [taskID]")
 		}
-		alias := args[1]
+		alias = args[1]
 
-		var projectId *int64
 		if tasksAliasProjectId != "" {
 			if projectId, err = harvest.GetProjectId(tasksAliasProjectId); err != nil {
-				return err
+				return errors.Wrap(err, "getting project")
 			}
 		} else {
 			if projectId, err = getTaskProjectId(taskId, ctx); err != nil {
@@ -50,6 +53,7 @@ var tasksAliasCmd = &cobra.Command{
 			}
 		}
 
+		// set alias
 		config.Harvest.TaskAliases[alias] = config.TaskAlias{
 			TaskId:    taskId,
 			ProjectId: *projectId,

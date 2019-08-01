@@ -24,17 +24,22 @@ import (
 )
 
 var projectsAliasCmd = &cobra.Command{
-	Use:   "alias [ProjectID] [Alias]",
+	Use:   "alias [projectId] [alias]",
 	Args:  cobra.ExactArgs(2),
 	Short: "Alias a project ID",
 	Long:  `Alias a project ID to a friendly string the can be used anywhere`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		projectId, err := strconv.ParseInt(args[0], 10, 64)
-		if err != nil {
-			return errors.Wrap(err, "for ProjectID")
+		var projectId int64
+		var alias string
+
+		// gather inputs
+		if projectId, err = strconv.ParseInt(args[0], 10, 64); err != nil {
+			return errors.Wrap(err, "for [projectId]")
 		}
-		alias := args[1]
+		alias = args[1]
+
+		// set alias
 		config.Harvest.ProjectAliases[alias] = config.ProjectAlias{
 			ProjectId: projectId,
 		}

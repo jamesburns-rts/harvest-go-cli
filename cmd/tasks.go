@@ -31,18 +31,22 @@ var tasksCmd = &cobra.Command{
 	Use:   "tasks",
 	Short: "List tasks of a project",
 	Long:  `For the given project, list the tasks with their associated IDs`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		projectId, err := harvest.GetProjectId(tasksProjectId)
-		if err != nil {
+		var projectId *int64
+
+		// gather inputs
+		if projectId, err = harvest.GetProjectId(tasksProjectId); err != nil {
 			return errors.Wrap(err, "for --project")
 		}
 
-		tasks, err := harvest.GetTasks(projectId, ctx)
-		if err != nil {
-			return err
+		// get tasks
+		var tasks []harvest.Task
+		if tasks, err = harvest.GetTasks(projectId, ctx); err != nil {
+			return errors.Wrap(err, "getting tasks")
 		}
 
+		// print
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return tasksOutputSimple(tasks) },
 			config.OutputFormatTable:  func() error { return tasksOutputTable(tasks) },

@@ -33,6 +33,7 @@ var setCmd = &cobra.Command{
 	Long:  `TODO - longer description`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
+		// gather inputs
 		if setHarvestArgs.AccountId != "" {
 			config.Harvest.AccountId = setHarvestArgs.AccountId
 		}
@@ -56,6 +57,7 @@ var setCmd = &cobra.Command{
 			}
 		}
 
+		// write config
 		return writeConfig()
 	}),
 }

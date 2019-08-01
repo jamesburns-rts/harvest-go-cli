@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -13,16 +13,23 @@ import (
 
 var arrivedCmd = &cobra.Command{
 	Use:   "arrived [time]",
+	Args:  cobra.MaximumNArgs(1),
 	Short: "Mark time arrived at work",
 	Long:  `Mark time arrived at work`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		t, err := parseTime(args)
-		if err != nil {
-			return errors.New("expected time format of hh:mm")
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
+
+		var timeArrived time.Time
+
+		// gather inputs
+		if timeArrived, err = parseTime(args); err != nil {
+			return errors.New("for [time]: expected time format of hh:mm")
 		}
 
-		config.Tracking.SetArrived(t)
-		fmt.Printf("Marking time arrived as %s\n", formatArrived(t))
+		// set time arrived
+		timers.Records.SetArrived(timeArrived)
+
+		// output
+		fmt.Printf("Marking time arrived as %s\n", formatArrived(timeArrived))
 		return writeConfig()
 	}),
 }

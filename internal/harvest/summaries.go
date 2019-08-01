@@ -2,7 +2,6 @@ package harvest
 
 import (
 	"context"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"time"
@@ -14,7 +13,6 @@ type (
 		MonthLoggedHours Hours
 		BillableHours    Hours
 		NonBillableHours Hours
-		WorkedTodayHours Hours
 		TodayLoggedHours Hours
 	}
 )
@@ -55,11 +53,6 @@ func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, erro
 	}
 
 	summary.MonthLoggedHours = summary.BillableHours + summary.NonBillableHours
-
-	arrived := config.Tracking.ArrivedTime()
-	if arrived != nil && util.SameDay(*arrived, time.Now()) {
-		summary.WorkedTodayHours = Hours(time.Now().Sub(*arrived).Hours())
-	}
 
 	return summary, nil
 }

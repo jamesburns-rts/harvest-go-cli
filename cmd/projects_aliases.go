@@ -29,8 +29,10 @@ var projectsAliasesCmd = &cobra.Command{
 	Long:  `List project aliases`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
+		// get aliases
 		aliases := config.Harvest.ProjectAliases
 
+		// print
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return projectsAliasesOutputSimple(aliases) },
 			config.OutputFormatTable:  func() error { return projectsAliasesOutputTable(aliases) },

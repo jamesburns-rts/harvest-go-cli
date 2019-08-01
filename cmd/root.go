@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
+	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -34,26 +37,47 @@ import (
 var cfgFile string
 var outputFormat string
 
+type rootSummary struct {
+	harvest.MonthSummary
+	WorkedTodayHours *Hours
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "harvest",
 	Short: "A commandline tool for all things Harvest Time Tracking",
 	Long:  `TODO - longer description`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		s, err := harvest.CalculateMonthSummary(time.Now(), ctx)
-		if err != nil {
-			return err
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
+
+		var harvestSummary harvest.MonthSummary
+		var workedTodayHours *Hours
+
+		// calculate monthly summary
+		if harvestSummary, err = harvest.CalculateMonthSummary(time.Now(), ctx); err != nil {
+			return errors.Wrap(err, "calculating summary")
 		}
 
+		arrived := timers.Records.ArrivedTime()
+		if arrived != nil && util.SameDay(*arrived, time.Now()) {
+			calc := Hours(time.Now().Sub(*arrived).Hours())
+			workedTodayHours = &calc
+		}
+
+		summary := rootSummary{
+			MonthSummary:     harvestSummary,
+			WorkedTodayHours: workedTodayHours,
+		}
+
+		// print
 		return printWithFormat(outputMap{
-			config.OutputFormatSimple: func() error { return rootOutputSimple(s) },
-			config.OutputFormatTable:  func() error { return rootOutputTable(s) },
-			config.OutputFormatJson:   func() error { return outputJson(s) },
+			config.OutputFormatSimple: func() error { return rootOutputSimple(summary) },
+			config.OutputFormatTable:  func() error { return rootOutputTable(summary) },
+			config.OutputFormatJson:   func() error { return outputJson(summary) },
 		})
 	}),
 }
 
-func rootOutputSimple(s harvest.MonthSummary) error {
+func rootOutputSimple(s rootSummary) error {
 	fmt.Printf(`
     Month Required Hours: %v
     Month Logged Hours: %v
@@ -74,7 +98,7 @@ func rootOutputSimple(s harvest.MonthSummary) error {
 	)
 	return nil
 }
-func rootOutputTable(s harvest.MonthSummary) error {
+func rootOutputTable(s rootSummary) error {
 	table := createTable(nil)
 	table.AppendBulk([][]string{
 		{"Month Required Hours", s.RequiredHours.String()},
@@ -152,16 +176,26 @@ func initConfig() {
 	if conf.Harvest.TaskAliases == nil {
 		conf.Harvest.TaskAliases = make(map[string]config.TaskAlias)
 	}
+	if timers.Records.Timers == nil {
+		timers.Records.Timers = make(map[string]timers.Timer)
+	}
 
 	config.Harvest = conf.Harvest
 	config.Cli = conf.Cli
-	config.Tracking = conf.Timers
+	timers.Records = conf.Timers
+
+	// clear old timers
+	for k, v := range timers.Records.Timers {
+		if !util.SameDay(*v.StartedTime(), time.Now()) {
+			delete(timers.Records.Timers, k)
+		}
+	}
 }
 
 type viperConfig struct {
 	Harvest config.HarvestProperties
 	Cli     config.CliProperties
-	Timers  config.TrackingRecords
+	Timers  timers.TrackingRecords
 }
 
 func getOutputFormat() string {

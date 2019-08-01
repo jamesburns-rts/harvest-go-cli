@@ -36,6 +36,7 @@ var projectsCmd = &cobra.Command{
 			return err
 		}
 
+		// print
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return projectsOutputSimple(projects) },
 			config.OutputFormatTable:  func() error { return projectsOutputTable(projects) },

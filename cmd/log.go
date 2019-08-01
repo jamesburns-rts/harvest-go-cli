@@ -20,29 +20,30 @@ var logCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Short: "Log a time entry",
 	Long:  `Log a time entry`,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		taskId, projectId, err := getTaskAndProjectId(args[0])
-		if err != nil {
-			return err
+		var taskId *int64
+		var projectId *int64
+		var date *time.Time
+		var duration time.Duration
+
+		// gather inputs
+		if taskId, projectId, err = getTaskAndProjectId(args[0]); err != nil {
+			return errors.Wrap(err, "for [task]")
 		}
-
 		if projectId == nil {
 			if projectId, err = getTaskProjectId(*taskId, ctx); err != nil {
-				return err
+				return errors.Wrap(err, "could not get projectId")
 			}
 		}
-
-		date, err := util.StringToDate(logDate)
-		if err != nil {
-			return err
+		if date, err = util.StringToDate(logDate); err != nil {
+			return errors.Wrap(err, "for --date")
+		}
+		if duration, err = time.ParseDuration(args[1]); err != nil {
+			return errors.Wrap(err, "for [duration]")
 		}
 
-		duration, err := time.ParseDuration(args[1])
-		if err != nil {
-			return errors.Wrap(err, "problem parsing duration")
-		}
-
+		// log time
 		entry, err := harvest.LogTime(harvest.LogTimeOptions{
 			TaskId:    *taskId,
 			ProjectId: *projectId,
@@ -55,6 +56,7 @@ var logCmd = &cobra.Command{
 			return err
 		}
 
+		// print
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return logOutputSimple() },
 			config.OutputFormatTable:  func() error { return logOutputTable(entry) },

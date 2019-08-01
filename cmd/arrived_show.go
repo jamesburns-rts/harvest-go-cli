@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/spf13/cobra"
 )
 
@@ -12,9 +12,11 @@ var arrivedShowCmd = &cobra.Command{
 	Short: "Show the time arrived at work",
 	Long:  `Show the time arrived at work`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		t := config.Tracking.ArrivedTime()
-		if t != nil {
-			fmt.Println(formatArrived(*t))
+
+		timeArrived := timers.Records.ArrivedTime()
+
+		if timeArrived != nil {
+			fmt.Println(formatArrived(*timeArrived))
 		} else {
 			fmt.Println("No arrived time set")
 		}

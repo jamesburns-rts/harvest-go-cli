@@ -29,9 +29,13 @@ func WeekdaysBetween(start, stop time.Time) int {
 	for !SameDay(start, stop) {
 		switch start.Weekday() {
 		case time.Monday:
+			fallthrough
 		case time.Tuesday:
+			fallthrough
 		case time.Wednesday:
+			fallthrough
 		case time.Thursday:
+			fallthrough
 		case time.Friday:
 			totalDays++
 		}
