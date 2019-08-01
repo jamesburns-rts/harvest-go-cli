@@ -147,7 +147,7 @@ func GetProjects(ctx context.Context) (projects []Project, err error) {
 			projects = append(projects, Project{
 				ID:       *p.Project.Id,
 				Name:     *p.Project.Name,
-				Billable: *p.Project.IsBillable,
+				Billable: p.Project.IsBillable != nil && *p.Project.IsBillable,
 				Tasks:    tasks,
 			})
 		}

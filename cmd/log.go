@@ -58,7 +58,7 @@ var logCmd = &cobra.Command{
 		} else if format == config.OutputFormatTable {
 			table := createTable([]string{"Key", "Value"})
 			table.AppendBulk([][]string{
-				{"ID", string(entry.ID),},
+				{"ID", fmt.Sprintf("%v", entry.ID),},
 				{"Project", entry.Project.Name,},
 				{"Task", entry.Task.Name,},
 				{"Message", entry.Notes,},
