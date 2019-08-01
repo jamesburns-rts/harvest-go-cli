@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -12,6 +14,7 @@ import (
 	"math"
 	"os"
 	"os/signal"
+	"strconv"
 )
 
 type CobraFunc func(cmd *cobra.Command, args []string)
@@ -104,4 +107,44 @@ func formatHours(hours float64) string {
 
 	// else config.TimeDeltaFormatDecimal or other
 	return fmt.Sprintf("%0.2f", hours)
+}
+
+func getTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
+
+	projects, err := harvest.GetProjects(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "problem getting projects for taskId")
+	}
+	var tasksProjects []harvest.Project
+	for _, p := range projects {
+		for _, t := range p.Tasks {
+			if t.ID == taskId {
+				tasksProjects = append(tasksProjects, p)
+			}
+		}
+	}
+	if len(tasksProjects) == 0 {
+		return nil, errors.New("no project found for task id")
+	} else if len(tasksProjects) == 1 {
+		return &tasksProjects[0].ID, nil
+	} else {
+		selected := prompt.ForSelection("Matched multiple projects, select one", tasksProjects)
+		return &projects[selected].ID, nil
+	}
+}
+
+func getTaskAndProjectId(str string) (taskId, projectId *int64, err error) {
+	if str == "" {
+		return nil, nil, nil
+	}
+
+	if taskAlias, ok := config.Harvest.TaskAliases[str]; ok {
+		return &taskAlias.TaskId, &taskAlias.ProjectId, nil
+	}
+
+	i, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		return nil, nil, errors.New("no alias found for " + str)
+	}
+	return &i, nil, err
 }

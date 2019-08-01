@@ -40,17 +40,19 @@ var entriesCmd = &cobra.Command{
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 		var err error
 		options := harvest.EntryListOptions{}
-		if options.ProjectId, err = harvest.GetProjectId(entriesProject); err != nil {
-			return errors.Wrap(err, "for --project: ")
-		}
-		if options.TaskId, err = harvest.GetTaskId(entriesTask); err != nil {
-			return errors.Wrap(err, "for --task: ")
-		}
 		if options.To, err = util.StringToDate(entriesToDate); err != nil {
 			return errors.Wrap(err, "for --to: ")
 		}
 		if options.From, err = util.StringToDate(entriesFromDate); err != nil {
 			return errors.Wrap(err, "for --from: ")
+		}
+		if options.TaskId, options.ProjectId, err = getTaskAndProjectId(entriesTask); err != nil {
+			return errors.Wrap(err, "for --task: ")
+		}
+		if entriesProject != "" {
+			if options.ProjectId, err = harvest.GetProjectId(entriesProject); err != nil {
+				return errors.Wrap(err, "for --project: ")
+			}
 		}
 		if len(args) > 0 {
 			var onDate *time.Time

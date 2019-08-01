@@ -22,8 +22,9 @@ type (
 	}
 
 	Task struct {
-		ID   int64  `json:"id"`
-		Name string `json:"name"`
+		ID        int64  `json:"id"`
+		ProjectId int64  `json:"projectId"`
+		Name      string `json:"name"`
 	}
 
 	Entry struct {
@@ -44,10 +45,11 @@ type (
 	}
 
 	LogTimeOptions struct {
-		TaskId int64
-		Date   time.Time
-		Hours  Hours
-		Notes  string
+		TaskId    int64
+		ProjectId int64
+		Date      time.Time
+		Hours     Hours
+		Notes     string
 	}
 )
 
@@ -92,23 +94,6 @@ func GetProjectId(str string) (*int64, error) {
 	return &i, err
 }
 
-// GetTaskId either parse the string for an integer or check for an alias
-func GetTaskId(str string) (*int64, error) {
-	if str == "" {
-		return nil, nil
-	}
-
-	if taskAlias, ok := config.Harvest.TaskAliases[str]; ok {
-		return &taskAlias.TaskId, nil
-	}
-
-	i, err := strconv.ParseInt(str, 10, 64)
-	if err != nil {
-		return nil, errors.New("no alias found for " + str)
-	}
-	return &i, err
-}
-
 // GetProjects Get a list of projects and their tasks
 func GetProjects(ctx context.Context) (projects []Project, err error) {
 	client, err := createClient(ctx)
@@ -139,8 +124,9 @@ func GetProjects(ctx context.Context) (projects []Project, err error) {
 				}
 
 				tasks = append(tasks, Task{
-					ID:   *t.Task.Id,
-					Name: *t.Task.Name,
+					ID:        *t.Task.Id,
+					ProjectId: *p.Project.Id,
+					Name:      *t.Task.Name,
 				})
 			}
 
@@ -239,30 +225,6 @@ func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
 	return convertEntry(*entry), nil
 }
 
-func GetTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
-
-	// check alias first
-	for _, alias := range config.Harvest.TaskAliases {
-		if alias.TaskId == taskId {
-			return &alias.ProjectId, nil
-		}
-	}
-
-	// get projects from API
-	projects, err := GetProjects(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "problem getting projects for taskId")
-	}
-	for _, p := range projects {
-		for _, t := range p.Tasks {
-			if t.ID == taskId {
-				return &p.ID, nil
-			}
-		}
-	}
-	return nil, errors.New("no project found for task id")
-}
-
 func convertEntry(e harvest.TimeEntry) Entry {
 	entry := Entry{
 		ID:    *e.Id,
@@ -273,8 +235,9 @@ func convertEntry(e harvest.TimeEntry) Entry {
 			Name: *e.Project.Name,
 		},
 		Task: Task{
-			ID:   *e.Task.Id,
-			Name: *e.Task.Name,
+			ID:        *e.Task.Id,
+			ProjectId: *e.Project.Id,
+			Name:      *e.Task.Name,
 		},
 	}
 	if e.Hours != nil {
@@ -309,11 +272,6 @@ func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 
 func (o LogTimeOptions) toHarvestOptions(ctx context.Context) (harvest.TimeEntryCreateViaDuration, error) {
 
-	projectId, err := GetTaskProjectId(o.TaskId, ctx)
-	if err != nil {
-		return harvest.TimeEntryCreateViaDuration{}, err
-	}
-
 	var notes *string
 	if o.Notes != "" {
 		notes = &o.Notes
@@ -322,7 +280,7 @@ func (o LogTimeOptions) toHarvestOptions(ctx context.Context) (harvest.TimeEntry
 	hours := float64(o.Hours)
 
 	return harvest.TimeEntryCreateViaDuration{
-		ProjectId: projectId,
+		ProjectId: &o.ProjectId,
 		TaskId:    &o.TaskId,
 		SpentDate: &harvest.Date{Time: o.Date},
 		Hours:     &hours,

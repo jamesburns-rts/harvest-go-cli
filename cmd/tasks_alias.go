@@ -24,6 +24,8 @@ import (
 	"strconv"
 )
 
+var tasksAliasProjectId string
+
 var tasksAliasCmd = &cobra.Command{
 	Use:   "alias [TaskId] [Alias]",
 	Args:  cobra.ExactArgs(2),
@@ -37,10 +39,17 @@ var tasksAliasCmd = &cobra.Command{
 		}
 		alias := args[1]
 
-		projectId, err := harvest.GetTaskProjectId(taskId, ctx)
-		if err != nil {
-			return errors.Wrap(err, "error getting task project")
+		var projectId *int64
+		if tasksAliasProjectId != "" {
+			if projectId, err = harvest.GetProjectId(tasksAliasProjectId); err != nil {
+				return err
+			}
+		} else {
+			if projectId, err = getTaskProjectId(taskId, ctx); err != nil {
+				return errors.Wrap(err, "error getting task project")
+			}
 		}
+
 		config.Harvest.TaskAliases[alias] = config.TaskAlias{
 			TaskId:    taskId,
 			ProjectId: *projectId,
@@ -67,4 +76,6 @@ var timeTasksAliasDeleteCmd = &cobra.Command{
 func init() {
 	tasksCmd.AddCommand(tasksAliasCmd)
 	tasksAliasCmd.AddCommand(timeTasksAliasDeleteCmd)
+
+	tasksAliasCmd.Flags().StringVarP(&tasksAliasProjectId, "project", "p", "", "project ID/alias the task is for")
 }

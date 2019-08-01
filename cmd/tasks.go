@@ -47,7 +47,7 @@ var tasksCmd = &cobra.Command{
 		format := getOutputFormat()
 		if format == config.OutputFormatSimple {
 			for _, task := range tasks {
-				fmt.Printf("%v %v\n", task.ID, task.Name)
+				fmt.Printf("%v %v %v\n", task.ProjectId, task.ID, task.Name)
 			}
 
 		} else if format == config.OutputFormatJson {
@@ -55,9 +55,10 @@ var tasksCmd = &cobra.Command{
 
 		} else if format == config.OutputFormatTable {
 
-			table := createTable([]string{"ID", "Task Name"})
+			table := createTable([]string{"Project ID", "ID", "Task Name"})
 			for _, task := range tasks {
 				table.Append([]string{
+					strconv.Itoa(int(task.ProjectId)),
 					strconv.Itoa(int(task.ID)),
 					task.Name,
 				})

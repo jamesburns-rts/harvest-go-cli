@@ -22,9 +22,15 @@ var logCmd = &cobra.Command{
 	Long:  `Log a time entry`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
-		taskId, err := harvest.GetTaskId(args[0])
+		taskId, projectId, err := getTaskAndProjectId(args[0])
 		if err != nil {
 			return err
+		}
+
+		if projectId == nil {
+			if projectId, err = getTaskProjectId(*taskId, ctx); err != nil {
+				return err
+			}
 		}
 
 		date, err := util.StringToDate(logDate)
@@ -38,10 +44,11 @@ var logCmd = &cobra.Command{
 		}
 
 		entry, err := harvest.LogTime(harvest.LogTimeOptions{
-			TaskId: *taskId,
-			Date:   *date,
-			Hours:  Hours(duration.Hours()),
-			Notes:  logMessage,
+			TaskId:    *taskId,
+			ProjectId: *projectId,
+			Date:      *date,
+			Hours:     Hours(duration.Hours()),
+			Notes:     logMessage,
 		}, ctx)
 
 		if err != nil {
