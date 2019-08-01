@@ -55,30 +55,31 @@ var logCmd = &cobra.Command{
 			return err
 		}
 
-		format := getOutputFormat()
-		if format == config.OutputFormatSimple {
-			fmt.Println("Successful")
-
-		} else if format == config.OutputFormatJson {
-			return outputJson(entry)
-
-		} else if format == config.OutputFormatTable {
-			table := createTable([]string{"Key", "Value"})
-			table.AppendBulk([][]string{
-				{"ID", fmt.Sprintf("%v", entry.ID),},
-				{"Project", entry.Project.Name,},
-				{"Task", entry.Task.Name,},
-				{"Message", entry.Notes,},
-				{"Date", entry.Date,},
-				{"Hours", entry.Hours.String(),},
-			})
-			table.Render()
-		} else {
-			return errors.New("unrecognized --format " + format)
-		}
-
-		return nil
+		return printWithFormat(outputMap{
+			config.OutputFormatSimple: func() error { return logOutputSimple() },
+			config.OutputFormatTable:  func() error { return logOutputTable(entry) },
+			config.OutputFormatJson:   func() error { return outputJson(entry) },
+		})
 	}),
+}
+
+func logOutputSimple() error {
+	fmt.Println("Successful")
+	return nil
+}
+
+func logOutputTable(entry harvest.Entry) error {
+	table := createTable([]string{"Key", "Value"})
+	table.AppendBulk([][]string{
+		{"ID", fmt.Sprintf("%v", entry.ID),},
+		{"Project", entry.Project.Name,},
+		{"Task", entry.Task.Name,},
+		{"Message", entry.Notes,},
+		{"Date", entry.Date,},
+		{"Hours", entry.Hours.String(),},
+	})
+	table.Render()
+	return nil
 }
 
 func init() {

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
@@ -37,32 +36,31 @@ var projectsCmd = &cobra.Command{
 			return err
 		}
 
-		// print
-		format := getOutputFormat()
-		if format == config.OutputFormatSimple {
-			for _, proj := range projects {
-				fmt.Printf("%v %v\n", proj.ID, proj.Name)
-			}
-
-		} else if format == config.OutputFormatJson {
-			return outputJson(projects)
-
-		} else if format == config.OutputFormatTable {
-
-			table := createTable([]string{"ID", "Project Name"})
-			for _, proj := range projects {
-				table.Append([]string{
-					strconv.Itoa(int(proj.ID)),
-					proj.Name,
-				})
-			}
-			table.Render()
-		} else {
-			return errors.New("unrecognized --format " + format)
-		}
-
-		return nil
+		return printWithFormat(outputMap{
+			config.OutputFormatSimple: func() error { return projectsOutputSimple(projects) },
+			config.OutputFormatTable:  func() error { return projectsOutputTable(projects) },
+			config.OutputFormatJson:   func() error { return outputJson(projects) },
+		})
 	}),
+}
+
+func projectsOutputSimple(projects []harvest.Project) error {
+	for _, proj := range projects {
+		fmt.Printf("%v %v\n", proj.ID, proj.Name)
+	}
+	return nil
+}
+
+func projectsOutputTable(projects []harvest.Project) error {
+	table := createTable([]string{"ID", "Project Name"})
+	for _, proj := range projects {
+		table.Append([]string{
+			strconv.Itoa(int(proj.ID)),
+			proj.Name,
+		})
+	}
+	table.Render()
+	return nil
 }
 
 func init() {

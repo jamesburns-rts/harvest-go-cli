@@ -21,6 +21,7 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -44,9 +45,16 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		format := getOutputFormat()
-		if format == config.OutputFormatSimple {
-			fmt.Printf(`
+		return printWithFormat(outputMap{
+			config.OutputFormatSimple: func() error { return rootOutputSimple(s) },
+			config.OutputFormatTable:  func() error { return rootOutputTable(s) },
+			config.OutputFormatJson:   func() error { return outputJson(s) },
+		})
+	}),
+}
+
+func rootOutputSimple(s harvest.MonthSummary) error {
+	fmt.Printf(`
     Month Required Hours: %v
     Month Logged Hours: %v
 
@@ -56,32 +64,28 @@ var rootCmd = &cobra.Command{
     Time worked: %v
     Logged today: %v
 `,
-				s.RequiredHours,
-				s.MonthLoggedHours,
-				s.BillableHours,
-				100*s.BillableHours/s.MonthLoggedHours,
-				s.NonBillableHours,
-				s.WorkedTodayHours,
-				s.TodayLoggedHours,
-			)
-
-		} else if format == config.OutputFormatJson {
-			return outputJson(s)
-
-		} else if format == config.OutputFormatTable {
-			table := createTable(nil)
-			table.AppendBulk([][]string{
-				{"Month Required Hours", s.RequiredHours.String()},
-				{"Month Logged Hours", s.MonthLoggedHours.String()},
-				{"Month Billable Hours", fmt.Sprintf("%v (%0.1f%%)", s.BillableHours, 100*s.BillableHours/s.MonthLoggedHours)},
-				{"Month NonBillable Hours", s.NonBillableHours.String()},
-				{"Time worked", s.WorkedTodayHours.String()},
-				{"Logged today", s.TodayLoggedHours.String()},
-			})
-			table.Render()
-		}
-		return err
-	}),
+		s.RequiredHours,
+		s.MonthLoggedHours,
+		s.BillableHours,
+		100*s.BillableHours/s.MonthLoggedHours,
+		s.NonBillableHours,
+		s.WorkedTodayHours,
+		s.TodayLoggedHours,
+	)
+	return nil
+}
+func rootOutputTable(s harvest.MonthSummary) error {
+	table := createTable(nil)
+	table.AppendBulk([][]string{
+		{"Month Required Hours", s.RequiredHours.String()},
+		{"Month Logged Hours", s.MonthLoggedHours.String()},
+		{"Month Billable Hours", fmt.Sprintf("%v (%0.1f%%)", s.BillableHours, 100*s.BillableHours/s.MonthLoggedHours)},
+		{"Month NonBillable Hours", s.NonBillableHours.String()},
+		{"Time worked", s.WorkedTodayHours.String()},
+		{"Logged today", s.TodayLoggedHours.String()},
+	})
+	table.Render()
+	return nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -168,4 +172,15 @@ func getOutputFormat() string {
 		return config.Cli.DefaultOutputFormat
 	}
 	return config.OutputFormatTable
+}
+
+type outputMap map[string]func() error
+
+func printWithFormat(supportedFormats map[string]func() error) error {
+	format := getOutputFormat()
+	if f, ok := supportedFormats[format]; ok {
+		return f()
+	} else {
+		return errors.New("unsupported --format " + format)
+	}
 }

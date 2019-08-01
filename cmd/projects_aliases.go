@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
@@ -30,27 +29,30 @@ var projectsAliasesCmd = &cobra.Command{
 	Long:  `List project aliases`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
-		format := getOutputFormat()
 		aliases := config.Harvest.ProjectAliases
-		if format == config.OutputFormatSimple {
-			for k := range aliases {
-				fmt.Println(k)
-			}
 
-		} else if format == config.OutputFormatJson {
-			return outputJson(aliases)
-
-		} else if format == config.OutputFormatTable {
-			table := createTable([]string{"Alias", "ProjectId"})
-			for k, v := range aliases {
-				table.Append([]string{k, strconv.Itoa(int(v.ProjectId))})
-			}
-			table.Render()
-		} else {
-			return errors.New("unrecognized --format " + format)
-		}
-		return nil
+		return printWithFormat(outputMap{
+			config.OutputFormatSimple: func() error { return projectsAliasesOutputSimple(aliases) },
+			config.OutputFormatTable:  func() error { return projectsAliasesOutputTable(aliases) },
+			config.OutputFormatJson:   func() error { return outputJson(aliases) },
+		})
 	}),
+}
+
+func projectsAliasesOutputSimple(aliases map[string]config.ProjectAlias) error {
+	for k := range aliases {
+		fmt.Println(k)
+	}
+
+	return nil
+}
+func projectsAliasesOutputTable(aliases map[string]config.ProjectAlias) error {
+	table := createTable([]string{"Alias", "ProjectId"})
+	for k, v := range aliases {
+		table.Append([]string{k, strconv.Itoa(int(v.ProjectId))})
+	}
+	table.Render()
+	return nil
 }
 
 func init() {

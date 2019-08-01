@@ -43,33 +43,32 @@ var tasksCmd = &cobra.Command{
 			return err
 		}
 
-		// print
-		format := getOutputFormat()
-		if format == config.OutputFormatSimple {
-			for _, task := range tasks {
-				fmt.Printf("%v %v %v\n", task.ProjectId, task.ID, task.Name)
-			}
-
-		} else if format == config.OutputFormatJson {
-			return outputJson(tasks)
-
-		} else if format == config.OutputFormatTable {
-
-			table := createTable([]string{"Project ID", "ID", "Task Name"})
-			for _, task := range tasks {
-				table.Append([]string{
-					strconv.Itoa(int(task.ProjectId)),
-					strconv.Itoa(int(task.ID)),
-					task.Name,
-				})
-			}
-			table.Render()
-
-		} else {
-			return errors.New("unrecognized --format " + format)
-		}
-		return nil
+		return printWithFormat(outputMap{
+			config.OutputFormatSimple: func() error { return tasksOutputSimple(tasks) },
+			config.OutputFormatTable:  func() error { return tasksOutputTable(tasks) },
+			config.OutputFormatJson:   func() error { return outputJson(tasks) },
+		})
 	}),
+}
+
+func tasksOutputSimple(tasks []harvest.Task) error {
+	for _, task := range tasks {
+		fmt.Printf("%v %v %v\n", task.ProjectId, task.ID, task.Name)
+	}
+	return nil
+}
+
+func tasksOutputTable(tasks []harvest.Task) error {
+	table := createTable([]string{"Project ID", "ID", "Task Name"})
+	for _, task := range tasks {
+		table.Append([]string{
+			strconv.Itoa(int(task.ProjectId)),
+			strconv.Itoa(int(task.ID)),
+			task.Name,
+		})
+	}
+	table.Render()
+	return nil
 }
 
 func init() {

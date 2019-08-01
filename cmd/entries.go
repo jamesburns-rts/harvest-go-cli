@@ -68,37 +68,36 @@ var entriesCmd = &cobra.Command{
 			return err
 		}
 
-		// print
-		format := getOutputFormat()
-		if format == config.OutputFormatSimple {
-			for _, entry := range entries {
-				fmt.Printf("%v %v %v %s %0.2f %v\n", entry.ID, entry.Project.ID, entry.Task.ID, entry.Date, entry.Hours, entry.Notes)
-			}
-
-		} else if format == config.OutputFormatJson {
-			return outputJson(entries)
-
-		} else if format == config.OutputFormatTable {
-			table := createTable([]string{"ID", "Project Name", "Date", "Task Name", "Hours", "Notes"})
-			for _, entry := range entries {
-
-				table.Append([]string{
-					strconv.Itoa(int(entry.ID)),
-					entry.Project.Name,
-					entry.Date,
-					entry.Task.Name,
-					entry.Hours.String(),
-					entry.Notes,
-				})
-			}
-			table.Render()
-
-		} else {
-			return errors.New("unrecognized --format " + format)
-		}
-
-		return nil
+		return printWithFormat(outputMap{
+			config.OutputFormatSimple: func() error { return entriesOutputSimple(entries) },
+			config.OutputFormatTable:  func() error { return entriesOutputTable(entries) },
+			config.OutputFormatJson:   func() error { return outputJson(entries) },
+		})
 	}),
+}
+
+func entriesOutputSimple(entries []harvest.Entry) error {
+	for _, entry := range entries {
+		fmt.Printf("%v %v %v %s %0.2f %v\n", entry.ID, entry.Project.ID, entry.Task.ID, entry.Date, entry.Hours, entry.Notes)
+	}
+	return nil
+}
+
+func entriesOutputTable(entries []harvest.Entry) error {
+	table := createTable([]string{"ID", "Project Name", "Date", "Task Name", "Hours", "Notes"})
+	for _, entry := range entries {
+
+		table.Append([]string{
+			strconv.Itoa(int(entry.ID)),
+			entry.Project.Name,
+			entry.Date,
+			entry.Task.Name,
+			entry.Hours.String(),
+			entry.Notes,
+		})
+	}
+	table.Render()
+	return nil
 }
 
 func init() {
