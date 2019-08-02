@@ -7,6 +7,17 @@ CLI for everything Harvest
 3. Copy down the `<accessToken>` and the `<accountId>`.
 4. Using the binary, run:
 ```sh
-./harvest set --harvest-access-token <accessToken>
-./harvest set --harvest-account-id <accountId>
+./harvest set --harvest-access-token <accessToken> --harvest-account-id <accountId>
 ```
+
+# Features That Should Work
+* List projects, tasks, and entries with certain filters - `harvest (projects|tasks|entries)`
+* Log time against a task - `harvest log [task] [duration]`
+* Alias project and task IDs - `harvest (projects|tasks) alias [id] [alias]` 
+
+# Features In Development
+* Timers
+* Interactive Mode
+* Statistics like project weights
+* Updating entries
+* Moving entries
