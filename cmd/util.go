@@ -8,14 +8,16 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
+	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"math"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 )
 
 type CobraFunc func(cmd *cobra.Command, args []string)
@@ -40,7 +42,9 @@ func withCtx(f CobraFuncWithCtx) CobraFunc {
 	return func(cmd *cobra.Command, args []string) {
 		err := f(cmd, args, ctx)
 		if err != nil {
-			fmt.Printf("An error occurred: %v\n", err)
+			if !strings.Contains(err.Error(), util.QuitError.Error()) {
+				fmt.Printf("An error occurred: %v\n", err)
+			}
 		}
 
 		signal.Stop(c)
@@ -97,19 +101,6 @@ func writeConfig() error {
 	return nil
 }
 
-func formatHours(hours float64) string {
-	if config.Cli.TimeDeltaFormat == config.TimeDeltaFormatHuman {
-		minutes := 60 * (hours - math.Floor(hours))
-		if hours < 1 {
-			return fmt.Sprintf("%0.0fm", minutes)
-		}
-		return fmt.Sprintf("%0.0fh %0.0fm", math.Floor(hours), minutes)
-	}
-
-	// else config.TimeDeltaFormatDecimal or other
-	return fmt.Sprintf("%0.2f", hours)
-}
-
 func getTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
 
 	projects, err := harvest.GetProjects(ctx)
@@ -129,9 +120,38 @@ func getTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
 	} else if len(tasksProjects) == 1 {
 		return &tasksProjects[0].ID, nil
 	} else {
-		selected := prompt.ForSelection("Matched multiple projects, select one", tasksProjects)
-		return &projects[selected].ID, nil
+		selected, err := prompt.ForSelection("Matched multiple projects, select one", tasksProjects)
+		return &projects[selected].ID, err
 	}
+}
+
+func selectProjectAndTask(ctx context.Context) (projectId, taskId *int64, err error) {
+	projects, err := harvest.GetProjects(ctx)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "problem getting projects")
+	}
+	selected, err := prompt.ForSelection("Select Project", projects)
+	if err != nil {
+		return nil, nil, err
+	}
+	project := projects[selected]
+	selected, err = prompt.ForSelection("Select Task", project.Tasks)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &project.ID, &project.Tasks[selected].ID, err
+}
+
+func selectTask(projectId int64, ctx context.Context) (taskId *int64, err error) {
+	project, err := harvest.GetProject(projectId, ctx)
+	if err != nil {
+		return nil, err
+	}
+	selected, err := prompt.ForSelection("Select Task", project.Tasks)
+	if err != nil {
+		return nil, err
+	}
+	return &project.Tasks[selected].ID, err
 }
 
 func getTaskAndProjectId(str string) (taskId, projectId *int64, err error) {
@@ -148,4 +168,21 @@ func getTaskAndProjectId(str string) (taskId, projectId *int64, err error) {
 		return nil, nil, errors.New("no alias found for " + str)
 	}
 	return &i, nil, err
+}
+
+func fmtHours(h *Hours) string {
+	if h == nil {
+		return "n/a"
+	}
+	if config.Cli.TimeDeltaFormat == config.TimeDeltaFormatHuman {
+		if *h < 1 {
+			return fmt.Sprintf("%0.0fm", h.Minutes())
+		}
+		return fmt.Sprintf("%0.0fh %0.0fm", h.Hours(), h.Minutes())
+	}
+
+	// else config.TimeDeltaFormatDecimal or other
+	str := fmt.Sprintf("%0.2f", float64(*h))
+	str = strings.TrimRight(str, "0")
+	return strings.TrimRight(str, ".")
 }

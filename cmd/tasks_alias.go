@@ -19,44 +19,106 @@ import (
 	"context"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
+	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
 
+var tasksAliasTaskId string
 var tasksAliasProjectId string
+var tasksAliasNotes string
+var tasksAliasDuration string
 
 var tasksAliasCmd = &cobra.Command{
-	Use:   "alias [TaskId] [Alias]",
-	Args:  cobra.ExactArgs(2),
+	Use:   "alias [Alias] [TaskId]",
+	Args:  cobra.MaximumNArgs(2),
 	Short: "Alias a task ID",
 	Long:  `Alias a task ID to a friendly string the can be used anywhere`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		var taskId int64
+		// get alias
 		var alias string
-		var projectId *int64
-
-		// gather inputs
-		if taskId, err = strconv.ParseInt(args[0], 10, 64); err != nil {
-			return errors.Wrap(err, "for [taskID]")
+		if len(args) > 0 {
+			alias = args[0]
+		} else {
+			if alias, err = prompt.ForWord("Alias Name"); err != nil {
+				return err
+			}
 		}
-		alias = args[1]
 
+		var projectId *int64
+		var taskId *int64
+		var defaultNotes *string
+		var defaultDuration *Hours
+
+		// check for existing
+		if taskAlias, ok := config.Harvest.TaskAliases[alias]; ok {
+			projectId = &taskAlias.ProjectId
+			taskId = &taskAlias.TaskId
+			defaultNotes = taskAlias.DefaultNotes
+			defaultDuration = taskAlias.DefaultDuration
+		}
+
+		// get projectId maybe
 		if tasksAliasProjectId != "" {
-			if projectId, err = harvest.GetProjectId(tasksAliasProjectId); err != nil {
+			if projectId, err = harvest.ParseProjectId(tasksAliasProjectId); err != nil {
 				return errors.Wrap(err, "getting project")
 			}
-		} else {
-			if projectId, err = getTaskProjectId(taskId, ctx); err != nil {
+		}
+
+		// get task ID
+		if len(args) > 1 {
+			if id, err := strconv.ParseInt(args[1], 10, 64); err != nil {
+				return errors.Wrap(err, "for [taskID]")
+			} else {
+				taskId = &id
+			}
+		}
+		if tasksAliasTaskId != "" {
+			if id, err := strconv.ParseInt(tasksAliasTaskId, 10, 64); err != nil {
+				return errors.Wrap(err, "for --task")
+			} else {
+				taskId = &id
+			}
+		}
+
+		if taskId == nil {
+			if projectId == nil {
+				if projectId, taskId, err = selectProjectAndTask(ctx); err != nil {
+					return err
+				}
+			} else {
+				if taskId, err = selectTask(*projectId, ctx); err != nil {
+					return err
+				}
+			}
+
+		} else if projectId == nil {
+			// select project
+			if projectId, err = getTaskProjectId(*taskId, ctx); err != nil {
 				return errors.Wrap(err, "error getting task project")
 			}
 		}
 
+		if tasksAliasNotes != "" {
+			defaultNotes = &tasksAliasNotes
+		}
+		if tasksAliasDuration != "" {
+			var duration Hours
+			if duration, err = ParseHours(tasksAliasDuration); err != nil {
+				return errors.Wrap(err, "for --default-duration")
+			}
+			defaultDuration = &duration
+		}
+
 		// set alias
 		config.Harvest.TaskAliases[alias] = config.TaskAlias{
-			TaskId:    taskId,
-			ProjectId: *projectId,
+			TaskId:          *taskId,
+			ProjectId:       *projectId,
+			DefaultNotes:    defaultNotes,
+			DefaultDuration: defaultDuration,
 		}
 
 		return writeConfig()
@@ -82,4 +144,7 @@ func init() {
 	tasksAliasCmd.AddCommand(timeTasksAliasDeleteCmd)
 
 	tasksAliasCmd.Flags().StringVarP(&tasksAliasProjectId, "project", "p", "", "project ID/alias the task is for")
+	tasksAliasCmd.Flags().StringVarP(&tasksAliasTaskId, "task", "t", "", "Task ID the task is for")
+	tasksAliasCmd.Flags().StringVarP(&tasksAliasNotes, "default-notes", "m", "", "Default notes to use when logging time")
+	tasksAliasCmd.Flags().StringVarP(&tasksAliasDuration, "default-duration", "d", "", "Default duration to use when logging time")
 }

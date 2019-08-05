@@ -101,12 +101,12 @@ func rootOutputSimple(s rootSummary) error {
 func rootOutputTable(s rootSummary) error {
 	table := createTable(nil)
 	table.AppendBulk([][]string{
-		{"Month Required Hours", s.RequiredHours.String()},
-		{"Month Logged Hours", s.MonthLoggedHours.String()},
+		{"Month Required Hours", fmtHours(&s.RequiredHours)},
+		{"Month Logged Hours", fmtHours(&s.MonthLoggedHours)},
 		{"Month Billable Hours", fmt.Sprintf("%v (%0.1f%%)", s.BillableHours, 100*s.BillableHours/s.MonthLoggedHours)},
-		{"Month NonBillable Hours", s.NonBillableHours.String()},
-		{"Time worked", s.WorkedTodayHours.String()},
-		{"Logged today", s.TodayLoggedHours.String()},
+		{"Month NonBillable Hours", fmtHours(&s.NonBillableHours)},
+		{"Time worked", fmtHours(s.WorkedTodayHours)},
+		{"Logged today", fmtHours(&s.TodayLoggedHours)},
 	})
 	table.Render()
 	return nil

@@ -79,8 +79,8 @@ func createClient(ctx context.Context) (*harvest.HarvestClient, error) {
 	return client, nil
 }
 
-// GetProjectId either parse the string for an integer or check for an alias
-func GetProjectId(str string) (*int64, error) {
+// ParseProjectId either parse the string for an integer or check for an alias
+func ParseProjectId(str string) (*int64, error) {
 	if str == "" {
 		return nil, nil
 	}
@@ -94,6 +94,19 @@ func GetProjectId(str string) (*int64, error) {
 		return nil, errors.New("no alias found for " + str)
 	}
 	return &i, err
+}
+
+func GetProject(projectId int64, ctx context.Context) (Project, error) {
+	projects, err := GetProjects(ctx)
+	if err != nil {
+		return Project{}, err
+	}
+	for _, p := range projects {
+		if p.ID == projectId {
+			return p, nil
+		}
+	}
+	return Project{}, errors.New("Project not found")
 }
 
 // GetProjects Get a list of projects and their tasks
@@ -274,7 +287,7 @@ func convertEntry(e harvest.TimeEntry) Entry {
 		entry.Notes = *e.Notes
 	}
 	if e.StartedTime != nil {
-		entry.TimerStarted = &e.StartedTime.Time
+		entry.TimerStarted = e.TimerStartedAt
 	}
 	return entry
 }

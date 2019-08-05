@@ -21,3 +21,7 @@ CLI for everything Harvest
 * Statistics like project weights
 * Updating entries
 * Moving entries
+* Default Notes/length for aliases
+* Short for today calculation
+* Interactive logging
+* Submit timesheet

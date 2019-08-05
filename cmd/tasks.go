@@ -36,7 +36,7 @@ var tasksCmd = &cobra.Command{
 		var projectId *int64
 
 		// gather inputs
-		if projectId, err = harvest.GetProjectId(tasksProjectId); err != nil {
+		if projectId, err = harvest.ParseProjectId(tasksProjectId); err != nil {
 			return errors.Wrap(err, "for --project")
 		}
 

@@ -2,8 +2,9 @@ package types
 
 import (
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"math"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,19 +23,31 @@ func (h Hours) Duration() time.Duration {
 	return time.Hour*time.Duration(h.Hours()) + time.Minute*time.Duration(h.Minutes())
 }
 
-func (h *Hours) String() string {
-	if h == nil {
-		return "null"
-	}
-	if config.Cli.TimeDeltaFormat == config.TimeDeltaFormatHuman {
-		if *h < 1 {
-			return fmt.Sprintf("%0.0fm", h.Minutes())
-		}
-		return fmt.Sprintf("%0.0fh %0.0fm", h.Hours(), h.Minutes())
-	}
+var anyLetters = regexp.MustCompile("^.*[a-z]+.*$")
 
-	// else config.TimeDeltaFormatDecimal or other
-	str := fmt.Sprintf("%0.2f", float64(*h))
-	str = strings.TrimRight(str, "0")
-	return strings.TrimRight(str, ".")
+func ParseHours(str string) (Hours, error) {
+	str = strings.ToLower(str)
+	str = strings.ReplaceAll(str, " ", "")
+	if anyLetters.MatchString(str) {
+		d, err := time.ParseDuration(str)
+		if err != nil {
+			return 0, err
+		}
+		return Hours(d.Hours()), nil
+	}
+	hours, err := strconv.ParseFloat(str, 64)
+	return Hours(hours), err
+}
+
+func (h *Hours) UnmarshalYAML(unmarshal func(interface{}) error) (err error) {
+	var str string
+	if err := unmarshal(&str); err != nil {
+		return err
+	}
+	*h, err = ParseHours(str)
+	return err
+}
+
+func (h *Hours) Marshal() (out []byte, err error) {
+	return []byte(fmt.Sprintf("%0.2f", float64(*h))), nil
 }

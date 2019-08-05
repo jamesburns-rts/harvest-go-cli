@@ -73,12 +73,12 @@ func logOutputSimple() error {
 func logOutputTable(entry harvest.Entry) error {
 	table := createTable([]string{"Key", "Value"})
 	table.AppendBulk([][]string{
-		{"ID", fmt.Sprintf("%v", entry.ID),},
-		{"Project", entry.Project.Name,},
-		{"Task", entry.Task.Name,},
-		{"Message", entry.Notes,},
-		{"Date", entry.Date,},
-		{"Hours", entry.Hours.String(),},
+		{"ID", fmt.Sprintf("%v", entry.ID)},
+		{"Project", entry.Project.Name},
+		{"Task", entry.Task.Name},
+		{"Message", entry.Notes},
+		{"Date", entry.Date},
+		{"Hours", fmtHours(&entry.Hours)},
 	})
 	table.Render()
 	return nil

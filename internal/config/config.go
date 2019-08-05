@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"strings"
 )
@@ -20,8 +21,10 @@ type (
 	}
 
 	TaskAlias struct {
-		TaskId    int64 `yaml,json:"taskId"`
-		ProjectId int64 `yaml,json:"projectId"`
+		TaskId          int64   `yaml,json:"taskId"`
+		ProjectId       int64   `yaml,json:"projectId"`
+		DefaultNotes    *string `yaml,json:"defaultNotes"`
+		DefaultDuration *Hours  `yaml,json:"defaultDuration"`
 	}
 
 	CliProperties struct {

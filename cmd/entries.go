@@ -52,7 +52,7 @@ var entriesCmd = &cobra.Command{
 			return errors.Wrap(err, "for --task")
 		}
 		if entriesProject != "" {
-			if options.ProjectId, err = harvest.GetProjectId(entriesProject); err != nil {
+			if options.ProjectId, err = harvest.ParseProjectId(entriesProject); err != nil {
 				return errors.Wrap(err, "for --project")
 			}
 		}
@@ -96,7 +96,7 @@ func entriesOutputTable(entries []harvest.Entry) error {
 			entry.Project.Name,
 			entry.Date,
 			entry.Task.Name,
-			entry.Hours.String(),
+			fmtHours(&entry.Hours),
 			entry.Notes,
 		})
 	}
