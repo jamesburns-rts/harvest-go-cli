@@ -32,7 +32,7 @@ var tasksAliasNotes string
 var tasksAliasDuration string
 
 var tasksAliasCmd = &cobra.Command{
-	Use:   "alias [Alias] [TaskId]",
+	Use:   "alias [ALIAS] [TASKID]",
 	Args:  cobra.MaximumNArgs(2),
 	Short: "Alias a task ID",
 	Long:  `Alias a task ID to a friendly string the can be used anywhere`,
@@ -126,7 +126,7 @@ var tasksAliasCmd = &cobra.Command{
 }
 
 var timeTasksAliasDeleteCmd = &cobra.Command{
-	Use:   "delete [Alias]",
+	Use:   "delete [ALIAS]",
 	Args:  cobra.ExactArgs(1),
 	Short: "Delete a task ID alias",
 	Long:  ``,

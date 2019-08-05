@@ -24,7 +24,7 @@ import (
 )
 
 var entriesDeleteCmd = &cobra.Command{
-	Use:   "delete [entryId]",
+	Use:   "delete ENTRY_ID",
 	Args:  cobra.ExactArgs(1),
 	Short: "Delete time entry",
 	Long:  `Delete time entry`,

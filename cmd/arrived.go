@@ -12,7 +12,7 @@ import (
 )
 
 var arrivedCmd = &cobra.Command{
-	Use:   "arrived [time]",
+	Use:   "arrived [TIME]",
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Mark time arrived at work",
 	Long:  `Mark time arrived at work`,

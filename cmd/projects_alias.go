@@ -24,7 +24,7 @@ import (
 )
 
 var projectsAliasCmd = &cobra.Command{
-	Use:   "alias [projectId] [alias]",
+	Use:   "alias [PROJECT_ID] [ALIAS]",
 	Args:  cobra.ExactArgs(2),
 	Short: "Alias a project ID",
 	Long:  `Alias a project ID to a friendly string the can be used anywhere`,

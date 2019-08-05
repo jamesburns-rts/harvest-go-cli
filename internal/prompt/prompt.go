@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/manifoldco/promptui"
@@ -12,7 +13,7 @@ func ForSelection(title string, options interface{}) (int, error) {
 	prompt := promptui.Select{
 		Label:     title,
 		Items:     options,
-		Templates: getSelectionTemplate(options),
+		Templates: getSelectionTemplate(title, options),
 	}
 
 	i, _, err := prompt.Run()
@@ -25,20 +26,20 @@ func ForSelection(title string, options interface{}) (int, error) {
 	return i, nil
 }
 
-func getSelectionTemplate(options interface{}) *promptui.SelectTemplates {
+func getSelectionTemplate(title string, options interface{}) *promptui.SelectTemplates {
 
 	switch options.(type) {
 	case []harvest.Project:
 		return &promptui.SelectTemplates{
 			Active:   "{{ .Name }}",
 			Inactive: "{{ .Name | faint }}",
-			Selected: promptui.IconGood + " {{ .Name }}",
+			Selected: fmt.Sprintf("%s %s: {{ .Name }}", promptui.IconGood, title),
 		}
 	case []harvest.Task:
 		return &promptui.SelectTemplates{
 			Active:   "{{ .Name }}",
 			Inactive: "{{ .Name | faint }}",
-			Selected: promptui.IconGood + " {{ .Name }}",
+			Selected: fmt.Sprintf("%s %s: {{ .Name }}", promptui.IconGood, title),
 		}
 	default:
 		return nil
@@ -55,18 +56,16 @@ func ForWord(title string) (string, error) {
 }
 
 func ForString(title string) (string, error) {
-	return ForStringWithValidation(title, func(s string) error {
-		if s == "" {
-			return errors.New("Must input value")
-		}
-		return nil
-	})
+	return ForStringWithValidation(title, nil)
 }
 
 func ForStringWithValidation(title string, validation func(s string) error) (string, error) {
 	prompt := promptui.Prompt{
 		Label:    title,
 		Validate: validation,
+		Templates: &promptui.PromptTemplates{
+			Success: fmt.Sprintf("%s %s: ", promptui.IconGood, title),
+		},
 	}
 
 	result, err := prompt.Run()

@@ -13,7 +13,7 @@ var timersStartDoNotSync bool
 var timersStartNotes string
 
 var timersStartCmd = &cobra.Command{
-	Use:   "start [name]",
+	Use:   "start [NAME]",
 	Args:  cobra.ExactArgs(1),
 	Short: "Start a timer",
 	Long:  `Start a timer`,

@@ -33,7 +33,7 @@ var entriesToDate string
 var entriesFromDate string
 
 var entriesCmd = &cobra.Command{
-	Use:   "entries [date]",
+	Use:   "entries [DATE]",
 	Args:  cobra.MaximumNArgs(1),
 	Short: "List time entries",
 	Long:  `List time entries you have entered already`,
@@ -48,7 +48,7 @@ var entriesCmd = &cobra.Command{
 		if options.From, err = util.StringToDate(entriesFromDate); err != nil {
 			return errors.Wrap(err, "for --from")
 		}
-		if options.TaskId, options.ProjectId, err = getTaskAndProjectId(entriesTask); err != nil {
+		if options.TaskId, options.ProjectId, err = parseTaskAndProjectId(entriesTask); err != nil {
 			return errors.Wrap(err, "for --task")
 		}
 		if entriesProject != "" {

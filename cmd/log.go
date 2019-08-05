@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
@@ -12,12 +13,14 @@ import (
 	"time"
 )
 
+var logTask string
 var logMessage string
 var logDate string
+var logDuration string
 
 var logCmd = &cobra.Command{
-	Use:   "log [task] [duration]",
-	Args:  cobra.ExactArgs(2),
+	Use:   "log [TASK] [DURATION]",
+	Args:  cobra.MaximumNArgs(2),
 	Short: "Log a time entry",
 	Long:  `Log a time entry`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
@@ -25,22 +28,66 @@ var logCmd = &cobra.Command{
 		var taskId *int64
 		var projectId *int64
 		var date *time.Time
-		var duration time.Duration
+		var duration *Hours
 
-		// gather inputs
-		if taskId, projectId, err = getTaskAndProjectId(args[0]); err != nil {
-			return errors.Wrap(err, "for [task]")
+		if logTask == "" && len(args) > 0 {
+			logTask = args[0]
 		}
-		if projectId == nil {
-			if projectId, err = getTaskProjectId(*taskId, ctx); err != nil {
-				return errors.Wrap(err, "could not get projectId")
+		if logDuration == "" && len(args) > 1 {
+			logDuration = args[1]
+		}
+
+		// select project/task
+
+		if logTask != "" {
+			if taskId, projectId, err = parseTaskAndProjectId(logTask); err != nil {
+				return errors.Wrap(err, "for [task]")
+			}
+			if projectId == nil {
+				if projectId, err = getTaskProjectId(*taskId, ctx); err != nil {
+					return err
+				}
+			}
+		} else {
+			if projectId, taskId, err = selectProjectAndTask(ctx); err != nil {
+				return err
 			}
 		}
+
+		// get date
 		if date, err = util.StringToDate(logDate); err != nil {
 			return errors.Wrap(err, "for --date")
 		}
-		if duration, err = time.ParseDuration(args[1]); err != nil {
+
+		// get defaults
+		if alias, ok := config.Harvest.TaskAliases[logTask]; ok {
+			duration = alias.DefaultDuration
+			if alias.DefaultNotes != nil && logMessage == "" {
+				logMessage = *alias.DefaultNotes
+			}
+		}
+
+		// get duration
+		if logDuration == "" {
+			logDuration, err = prompt.ForStringWithValidation("Duration", func(s string) error {
+				_, e := ParseHours(s)
+				return e
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		duration = new(Hours)
+		if *duration, err = ParseHours(logDuration); err != nil {
 			return errors.Wrap(err, "for [duration]")
+		}
+
+		// get message
+		if logMessage == "" {
+			if logMessage, err = prompt.ForString("Notes"); err != nil {
+				return err
+			}
 		}
 
 		// log time
@@ -48,7 +95,7 @@ var logCmd = &cobra.Command{
 			TaskId:    *taskId,
 			ProjectId: *projectId,
 			Date:      *date,
-			Hours:     Hours(duration.Hours()),
+			Hours:     *duration,
 			Notes:     logMessage,
 		}, ctx)
 
@@ -86,6 +133,8 @@ func logOutputTable(entry harvest.Entry) error {
 
 func init() {
 	rootCmd.AddCommand(logCmd)
+	logCmd.Flags().StringVarP(&logTask, "task", "t", "", "Set the task")
 	logCmd.Flags().StringVarP(&logMessage, "message", "m", "", "Add notes to the time entry")
 	logCmd.Flags().StringVarP(&logDate, "date", "d", "today", "Set the date for the entry")
+	logCmd.Flags().StringVarP(&logDuration, "duration", "D", "", "Set the duration for the entry")
 }

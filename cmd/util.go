@@ -42,7 +42,9 @@ func withCtx(f CobraFuncWithCtx) CobraFunc {
 	return func(cmd *cobra.Command, args []string) {
 		err := f(cmd, args, ctx)
 		if err != nil {
-			if !strings.Contains(err.Error(), util.QuitError.Error()) {
+			if strings.Contains(err.Error(), util.QuitError.Error()) {
+				fmt.Println("Exited.")
+			} else {
 				fmt.Printf("An error occurred: %v\n", err)
 			}
 		}
@@ -154,7 +156,7 @@ func selectTask(projectId int64, ctx context.Context) (taskId *int64, err error)
 	return &project.Tasks[selected].ID, err
 }
 
-func getTaskAndProjectId(str string) (taskId, projectId *int64, err error) {
+func parseTaskAndProjectId(str string) (taskId, projectId *int64, err error) {
 	if str == "" {
 		return nil, nil, nil
 	}
