@@ -14,6 +14,7 @@ import (
 )
 
 var logTask string
+var logProject string
 var logMessage string
 var logDate string
 var logDuration string
@@ -38,15 +39,28 @@ var logCmd = &cobra.Command{
 		}
 
 		// select project/task
+		if logProject != "" {
+			if projectId, err = harvest.ParseProjectId(logProject); err != nil {
+				return errors.Wrap(err, "for --project")
+			}
+		}
 
 		if logTask != "" {
-			if taskId, projectId, err = parseTaskAndProjectId(logTask); err != nil {
+			var taskProjectId *int64
+			if taskId, taskProjectId, err = harvest.ParseTaskId(logTask); err != nil {
 				return errors.Wrap(err, "for [task]")
+			}
+			if taskProjectId != nil {
+				projectId = taskProjectId
 			}
 			if projectId == nil {
 				if projectId, err = getTaskProjectId(*taskId, ctx); err != nil {
 					return err
 				}
+			}
+		} else if projectId != nil {
+			if taskId, err = selectTask(*projectId, ctx); err != nil {
+				return err
 			}
 		} else {
 			if projectId, taskId, err = selectProjectAndTask(ctx); err != nil {
@@ -69,23 +83,19 @@ var logCmd = &cobra.Command{
 
 		// get duration
 		if logDuration == "" {
-			logDuration, err = prompt.ForStringWithValidation("Duration", func(s string) error {
-				_, e := ParseHours(s)
-				return e
-			})
+			logDuration, err = prompt.ForString("Duration", validHours)
 			if err != nil {
 				return err
 			}
 		}
 
-		duration = new(Hours)
-		if *duration, err = ParseHours(logDuration); err != nil {
+		if duration, err = ParseHours(logDuration); err != nil {
 			return errors.Wrap(err, "for [duration]")
 		}
 
 		// get message
 		if logMessage == "" {
-			if logMessage, err = prompt.ForString("Notes"); err != nil {
+			if logMessage, err = prompt.ForString("Notes", nil); err != nil {
 				return err
 			}
 		}
@@ -105,19 +115,19 @@ var logCmd = &cobra.Command{
 
 		// print
 		return printWithFormat(outputMap{
-			config.OutputFormatSimple: func() error { return logOutputSimple() },
-			config.OutputFormatTable:  func() error { return logOutputTable(entry) },
+			config.OutputFormatSimple: func() error { return outputSuccess() },
+			config.OutputFormatTable:  func() error { return outputEntryTable(entry) },
 			config.OutputFormatJson:   func() error { return outputJson(entry) },
 		})
 	}),
 }
 
-func logOutputSimple() error {
+func outputSuccess() error {
 	fmt.Println("Successful")
 	return nil
 }
 
-func logOutputTable(entry harvest.Entry) error {
+func outputEntryTable(entry harvest.Entry) error {
 	table := createTable([]string{"Key", "Value"})
 	table.AppendBulk([][]string{
 		{"ID", fmt.Sprintf("%v", entry.ID)},
@@ -133,6 +143,7 @@ func logOutputTable(entry harvest.Entry) error {
 
 func init() {
 	rootCmd.AddCommand(logCmd)
+	logCmd.Flags().StringVarP(&logProject, "project", "p", "", "Set project")
 	logCmd.Flags().StringVarP(&logTask, "task", "t", "", "Set the task")
 	logCmd.Flags().StringVarP(&logMessage, "message", "m", "", "Add notes to the time entry")
 	logCmd.Flags().StringVarP(&logDate, "date", "d", "today", "Set the date for the entry")

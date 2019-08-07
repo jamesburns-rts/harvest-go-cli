@@ -32,7 +32,7 @@ var tasksAliasNotes string
 var tasksAliasDuration string
 
 var tasksAliasCmd = &cobra.Command{
-	Use:   "alias [ALIAS] [TASKID]",
+	Use:   "alias [ALIAS] [TASK_ID]",
 	Args:  cobra.MaximumNArgs(2),
 	Short: "Alias a task ID",
 	Long:  `Alias a task ID to a friendly string the can be used anywhere`,
@@ -43,7 +43,7 @@ var tasksAliasCmd = &cobra.Command{
 		if len(args) > 0 {
 			alias = args[0]
 		} else {
-			if alias, err = prompt.ForWord("Alias Name"); err != nil {
+			if alias, err = prompt.ForString("Alias Name", validAlias); err != nil {
 				return err
 			}
 		}
@@ -106,11 +106,9 @@ var tasksAliasCmd = &cobra.Command{
 			defaultNotes = &tasksAliasNotes
 		}
 		if tasksAliasDuration != "" {
-			var duration Hours
-			if duration, err = ParseHours(tasksAliasDuration); err != nil {
+			if defaultDuration, err = ParseHours(tasksAliasDuration); err != nil {
 				return errors.Wrap(err, "for --default-duration")
 			}
-			defaultDuration = &duration
 		}
 
 		// set alias

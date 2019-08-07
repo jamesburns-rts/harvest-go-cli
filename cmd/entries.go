@@ -48,7 +48,7 @@ var entriesCmd = &cobra.Command{
 		if options.From, err = util.StringToDate(entriesFromDate); err != nil {
 			return errors.Wrap(err, "for --from")
 		}
-		if options.TaskId, options.ProjectId, err = parseTaskAndProjectId(entriesTask); err != nil {
+		if options.TaskId, options.ProjectId, err = harvest.ParseTaskId(entriesTask); err != nil {
 			return errors.Wrap(err, "for --task")
 		}
 		if entriesProject != "" {

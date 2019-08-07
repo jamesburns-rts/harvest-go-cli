@@ -25,18 +25,29 @@ func (h Hours) Duration() time.Duration {
 
 var anyLetters = regexp.MustCompile("^.*[a-z]+.*$")
 
-func ParseHours(str string) (Hours, error) {
+func ParseHours(str string) (*Hours, error) {
 	str = strings.ToLower(str)
 	str = strings.ReplaceAll(str, " ", "")
+
+	if str == "" {
+		return nil, nil
+	}
+
+	var hours float64
 	if anyLetters.MatchString(str) {
 		d, err := time.ParseDuration(str)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
-		return Hours(d.Hours()), nil
+		hours = d.Hours()
+	} else {
+		var err error
+		if hours, err = strconv.ParseFloat(str, 64); err != nil {
+			return nil, err
+		}
 	}
-	hours, err := strconv.ParseFloat(str, 64)
-	return Hours(hours), err
+	h := Hours(hours)
+	return &h, nil
 }
 
 func (h *Hours) UnmarshalYAML(unmarshal func(interface{}) error) (err error) {
@@ -44,10 +55,21 @@ func (h *Hours) UnmarshalYAML(unmarshal func(interface{}) error) (err error) {
 	if err := unmarshal(&str); err != nil {
 		return err
 	}
-	*h, err = ParseHours(str)
-	return err
+	if hours, err := ParseHours(str); err != nil {
+		return err
+	} else {
+		*h = *hours
+		return nil
+	}
 }
 
 func (h *Hours) Marshal() (out []byte, err error) {
 	return []byte(fmt.Sprintf("%0.2f", float64(*h))), nil
+}
+
+func (h *Hours) FloatPtr() *float64 {
+	if h == nil {
+		return nil
+	}
+	return (*float64)(h)
 }

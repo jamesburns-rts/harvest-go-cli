@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 )
 
@@ -127,6 +126,36 @@ func getTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
 	}
 }
 
+func selectProjectAndTaskFrom(project, task string, ctx context.Context) (projectId, taskId *int64, err error) {
+
+	if task != "" {
+		if taskId, projectId, err = harvest.ParseTaskId(task); err != nil {
+			return nil, nil, err
+		}
+		if projectId != nil {
+			return taskId, projectId, nil
+		}
+	}
+
+	if project != "" {
+		if projectId, err = harvest.ParseProjectId(project); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if projectId == nil {
+		if projectId, err = selectProject(ctx); err != nil {
+			return nil, nil, err
+		}
+	}
+	if taskId == nil {
+		if taskId, err = selectTask(*projectId, ctx); err != nil {
+			return nil, nil, err
+		}
+	}
+	return projectId, taskId, nil
+}
+
 func selectProjectAndTask(ctx context.Context) (projectId, taskId *int64, err error) {
 	projects, err := harvest.GetProjects(ctx)
 	if err != nil {
@@ -144,6 +173,18 @@ func selectProjectAndTask(ctx context.Context) (projectId, taskId *int64, err er
 	return &project.ID, &project.Tasks[selected].ID, err
 }
 
+func selectProject(ctx context.Context) (projectId *int64, err error) {
+	projects, err := harvest.GetProjects(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "problem getting projects")
+	}
+	selected, err := prompt.ForSelection("Select Project", projects)
+	if err != nil {
+		return nil, err
+	}
+	return &projects[selected].ID, nil
+}
+
 func selectTask(projectId int64, ctx context.Context) (taskId *int64, err error) {
 	project, err := harvest.GetProject(projectId, ctx)
 	if err != nil {
@@ -154,22 +195,6 @@ func selectTask(projectId int64, ctx context.Context) (taskId *int64, err error)
 		return nil, err
 	}
 	return &project.Tasks[selected].ID, err
-}
-
-func parseTaskAndProjectId(str string) (taskId, projectId *int64, err error) {
-	if str == "" {
-		return nil, nil, nil
-	}
-
-	if taskAlias, ok := config.Harvest.TaskAliases[str]; ok {
-		return &taskAlias.TaskId, &taskAlias.ProjectId, nil
-	}
-
-	i, err := strconv.ParseInt(str, 10, 64)
-	if err != nil {
-		return nil, nil, errors.New("no alias found for " + str)
-	}
-	return &i, nil, err
 }
 
 func fmtHours(h *Hours) string {
@@ -187,4 +212,47 @@ func fmtHours(h *Hours) string {
 	str := fmt.Sprintf("%0.2f", float64(*h))
 	str = strings.TrimRight(str, "0")
 	return strings.TrimRight(str, ".")
+}
+
+func validProjectId(str string) error {
+	p, err := harvest.ParseProjectId(str)
+	if p == nil {
+		return errors.New("not valid")
+	}
+	return err
+}
+
+func validTaskId(str string) error {
+	t, _, err := harvest.ParseTaskId(str)
+	if t == nil {
+		return errors.New("not valid")
+	}
+	return err
+}
+
+func validHours(str string) error {
+	h, err := ParseHours(str)
+	if h == nil {
+		return errors.New("not valid")
+	}
+	return err
+}
+
+func validDate(str string) error {
+	d, err := util.StringToDate(str)
+	if d == nil {
+		return errors.New("not valid")
+	}
+	return err
+}
+
+func validNotes(str string) error {
+	return nil
+}
+
+func validAlias(str string) error {
+	if str == "" || strings.ContainsAny(str, " \t\n") {
+		return errors.New("Must input word with no spaces")
+	}
+	return nil
 }

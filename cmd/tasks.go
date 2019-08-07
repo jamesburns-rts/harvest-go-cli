@@ -26,6 +26,7 @@ import (
 )
 
 var tasksProjectId string
+var tasksAll bool
 
 var tasksCmd = &cobra.Command{
 	Use:   "tasks",
@@ -38,6 +39,10 @@ var tasksCmd = &cobra.Command{
 		// gather inputs
 		if projectId, err = harvest.ParseProjectId(tasksProjectId); err != nil {
 			return errors.Wrap(err, "for --project")
+		}
+
+		if projectId == nil && !tasksAll {
+			projectId, _ = selectProject(ctx)
 		}
 
 		// get tasks
@@ -78,4 +83,5 @@ func tasksOutputTable(tasks []harvest.Task) error {
 func init() {
 	rootCmd.AddCommand(tasksCmd)
 	tasksCmd.Flags().StringVarP(&tasksProjectId, "project", "p", "", "ProjectID")
+	tasksCmd.Flags().BoolVarP(&tasksAll, "all", "A", false, "Show tasks from all projects")
 }

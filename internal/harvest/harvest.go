@@ -2,6 +2,8 @@ package harvest
 
 import (
 	"context"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
+
 	//"github.com/becoded/go-harvest/harvest"
 	"github.com/jamesburns-rts/go-harvest/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
@@ -44,6 +46,15 @@ type (
 		ProjectId *int64
 		TaskId    *int64
 		Running   *bool
+	}
+
+	EntryUpdateOptions struct {
+		Entry       Entry
+		ProjectId   *int64
+		TaskId      *int64
+		Date        *time.Time
+		Hours       *Hours
+		Notes       *string
 	}
 
 	LogTimeOptions struct {
@@ -94,6 +105,22 @@ func ParseProjectId(str string) (*int64, error) {
 		return nil, errors.New("no alias found for " + str)
 	}
 	return &i, err
+}
+
+func ParseTaskId(str string) (taskId, projectId *int64, err error) {
+	if str == "" {
+		return nil, nil, nil
+	}
+
+	if taskAlias, ok := config.Harvest.TaskAliases[str]; ok {
+		return &taskAlias.TaskId, &taskAlias.ProjectId, nil
+	}
+
+	i, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		return nil, nil, errors.New("no alias found for " + str)
+	}
+	return &i, nil, err
 }
 
 func GetProject(projectId int64, ctx context.Context) (Project, error) {
@@ -211,6 +238,20 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 	return entries, nil
 }
 
+func GetEntry(entryId int64, ctx context.Context) (Entry, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating client")
+	}
+
+	entry, _, err := client.Timesheet.Get(ctx, entryId)
+	if err != nil || entry == nil {
+		return Entry{}, err
+	}
+
+	return convertEntry(*entry), nil
+}
+
 func DeleteEntry(entryId int64, ctx context.Context) error {
 	client, err := createClient(ctx)
 	if err != nil {
@@ -219,6 +260,21 @@ func DeleteEntry(entryId int64, ctx context.Context) error {
 
 	_, err = client.Timesheet.DeleteTimeEntry(ctx, entryId)
 	return err
+}
+
+func UpdateEntry(options EntryUpdateOptions, ctx context.Context) (Entry, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating client")
+	}
+
+	harvestOptions := options.toHarvestOptions()
+
+	entry, _, err := client.Timesheet.UpdateTimeEntry(ctx, options.Entry.ID, &harvestOptions)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "updating entry")
+	}
+	return convertEntry(*entry), err
 }
 
 func GetTimers(o *EntryListOptions, ctx context.Context) (entries []Entry, err error) {
@@ -339,4 +395,27 @@ func (o *EntryListOptions) includeTask(taskId *int64) bool {
 		return true
 	}
 	return false
+}
+
+func (o EntryUpdateOptions) toHarvestOptions() harvest.TimeEntryUpdate {
+	var h harvest.TimeEntryUpdate
+
+	o.ProjectId = &o.Entry.Project.ID
+	o.TaskId = &o.Entry.Task.ID
+	o.Date, _ = util.StringToDate(o.Entry.Date)
+
+	if o.ProjectId != nil {
+		h.ProjectId = o.ProjectId
+	}
+	if o.TaskId != nil {
+		h.TaskId = o.TaskId
+	}
+	if o.Date != nil {
+		h.SpentDate = &harvest.Date{Time: *o.Date}
+	}
+
+	h.Notes = o.Notes
+	h.Hours = o.Hours.FloatPtr()
+
+	return h
 }

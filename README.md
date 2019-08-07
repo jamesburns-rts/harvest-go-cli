@@ -12,8 +12,8 @@ CLI for everything Harvest
 
 # Features That Should Work
 * List projects, tasks, and entries with certain filters - `harvest (projects|tasks|entries)`
-* Log time against a task - `harvest log [task] [duration]`
-* Alias project and task IDs - `harvest (projects|tasks) alias [id] [alias]` 
+* Log time against a task - `harvest log [TASK] [DURATION]`
+* Alias project and task IDs - `harvest (projects|tasks) alias [ID] [ALIAS]` 
 
 # Features In Development
 * Timers
@@ -21,7 +21,5 @@ CLI for everything Harvest
 * Statistics like project weights
 * Updating entries
 * Moving entries
-* Default Notes/length for aliases
 * Short for today calculation
-* Interactive logging
 * Submit timesheet

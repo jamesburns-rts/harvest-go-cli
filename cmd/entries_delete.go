@@ -33,12 +33,12 @@ var entriesDeleteCmd = &cobra.Command{
 		var entryId int64
 
 		if entryId, err = strconv.ParseInt(args[0], 10, 64); err != nil {
-			return errors.Wrap(err, "problem with [entryId]")
+			return errors.Wrap(err, "problem with ENTRY_ID")
 		}
 
 		// delete entry
 		if err = harvest.DeleteEntry(entryId, ctx); err != nil {
-			return errors.Wrap(err, "problem delete entry")
+			return errors.Wrap(err, "problem deleting entry")
 		}
 
 		return nil
