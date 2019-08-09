@@ -83,7 +83,7 @@ func fileExists(fileName string) bool {
 func writeConfig() error {
 	viper.Set("harvest", config.Harvest)
 	viper.Set("cli", config.Cli)
-	viper.Set("tracking", timers.Records)
+	viper.Set("timers", timers.Records)
 
 	if !fileExists(cfgFile) {
 		f, err := os.Create(cfgFile)
@@ -256,3 +256,4 @@ func validAlias(str string) error {
 	}
 	return nil
 }
+

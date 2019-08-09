@@ -25,7 +25,7 @@ import (
 	"strconv"
 )
 
-var tasksProjectId string
+var tasksProject projectArg
 var tasksAll bool
 
 var tasksCmd = &cobra.Command{
@@ -34,15 +34,12 @@ var tasksCmd = &cobra.Command{
 	Long:  `For the given project, list the tasks with their associated IDs`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		var projectId *int64
-
-		// gather inputs
-		if projectId, err = harvest.ParseProjectId(tasksProjectId); err != nil {
-			return errors.Wrap(err, "for --project")
-		}
+		projectId := tasksProject.projectId
 
 		if projectId == nil && !tasksAll {
-			projectId, _ = selectProject(ctx)
+			if projectId, err = selectProject(ctx); err != nil {
+				return err
+			}
 		}
 
 		// get tasks
@@ -82,6 +79,6 @@ func tasksOutputTable(tasks []harvest.Task) error {
 
 func init() {
 	rootCmd.AddCommand(tasksCmd)
-	tasksCmd.Flags().StringVarP(&tasksProjectId, "project", "p", "", "ProjectID")
+	tasksCmd.Flags().VarP(&tasksProject, "project", "p", "Project ID or alias")
 	tasksCmd.Flags().BoolVarP(&tasksAll, "all", "A", false, "Show tasks from all projects")
 }

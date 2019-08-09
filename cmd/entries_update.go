@@ -21,18 +21,16 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/types"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
 
-var entriesUpdateProject string
-var entriesUpdateTask string
-var entriesUpdateHours string
-var entriesUpdateNotes string
-var entriesUpdateDate string
+var entriesUpdateProject projectArg
+var entriesUpdateTask taskArg
+var entriesUpdateHours hoursArg
+var entriesUpdateNotes stringArg
+var entriesUpdateDate dateArg
 var entriesUpdateAppendNotes bool
 var entriesUpdateAppendHours bool
 var entriesUpdateSelectTask bool
@@ -56,24 +54,21 @@ var entriesUpdateCmd = &cobra.Command{
 
 		// project and task
 		if entriesUpdateSelectTask {
-			if op.ProjectId, op.TaskId, err = selectProjectAndTaskFrom(entriesUpdateProject, entriesUpdateTask, ctx); err != nil {
+			if op.ProjectId, op.TaskId, err = selectProjectAndTaskFrom(entriesUpdateProject.str, entriesUpdateTask.str, ctx); err != nil {
 				return err
 			}
-			entriesUpdateProject = strconv.FormatInt(*op.ProjectId, 10)
-			entriesUpdateTask = strconv.FormatInt(*op.TaskId, 10)
+			entriesUpdateProject.SetId(op.ProjectId)
+			entriesUpdateTask.SetId(op.TaskId, op.ProjectId)
 		}
 
 		// append
 		if entriesUpdateAppendHours {
-			if h, err := types.ParseHours(entriesUpdateHours); err != nil {
-				return errors.Wrap(err, "for --hours")
-			} else {
-				*h += op.Entry.Hours
-				entriesUpdateHours = h.Duration().String()
-			}
+			h := op.Entry.Hours
+			h += *entriesUpdateHours.hours
+			entriesUpdateHours.SetHours(&h)
 		}
 		if entriesUpdateAppendNotes {
-			entriesUpdateNotes = fmt.Sprintf("%s\n%s", op.Entry.Notes, entriesUpdateNotes)
+			entriesUpdateNotes.str = fmt.Sprintf("%s\n%s", op.Entry.Notes, entriesUpdateNotes.str)
 		}
 
 		// confirm
@@ -84,22 +79,16 @@ var entriesUpdateCmd = &cobra.Command{
 		}
 
 		// parse
-		if op.TaskId, op.ProjectId, err = harvest.ParseTaskId(entriesUpdateTask); err != nil {
-			return errors.Wrap(err, "for --task")
+		op.TaskId = entriesUpdateTask.taskId
+		op.ProjectId = entriesUpdateTask.projectId
+		if entriesUpdateProject.projectId != nil {
+			op.ProjectId = entriesUpdateProject.projectId
 		}
-		if entriesUpdateProject != "" {
-			if op.ProjectId, err = harvest.ParseProjectId(entriesUpdateProject); err != nil {
-				return errors.Wrap(err, "for --project")
-			}
-		}
-		if op.Hours, err = types.ParseHours(entriesUpdateHours); err != nil {
-			return errors.Wrap(err, "for --hours")
-		}
-		if entriesUpdateNotes != "" || entriesUpdateClearNotes {
-			op.Notes = &entriesUpdateNotes
-		}
-		if op.Date, err = util.StringToDate(entriesUpdateDate); err != nil {
-			return errors.Wrap(err, "for --date")
+
+		op.Hours = entriesUpdateHours.hours
+		op.Date = entriesUpdateDate.date
+		if entriesUpdateNotes.str != "" || entriesUpdateClearNotes {
+			op.Notes = &entriesUpdateNotes.str
 		}
 
 		// update entry
@@ -117,11 +106,11 @@ var entriesUpdateCmd = &cobra.Command{
 
 func init() {
 	entriesCmd.AddCommand(entriesUpdateCmd)
-	entriesUpdateCmd.Flags().StringVarP(&entriesUpdateProject, "project", "p", "", "")
-	entriesUpdateCmd.Flags().StringVarP(&entriesUpdateTask, "task", "t", "", "")
-	entriesUpdateCmd.Flags().StringVarP(&entriesUpdateHours, "hours", "H", "", "")
-	entriesUpdateCmd.Flags().StringVarP(&entriesUpdateNotes, "message", "m", "", "")
-	entriesUpdateCmd.Flags().StringVarP(&entriesUpdateDate, "date", "d", "", "")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateProject, "project", "p", "")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateTask, "task", "t", "")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateHours, "hours", "H", "")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateNotes, "message", "m", "")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateDate, "date", "d", "")
 	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendNotes, "append-notes", false, "")
 	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendHours, "append-hours", false, "")
 	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateSelectTask, "select-task", false, "")
@@ -131,28 +120,28 @@ func init() {
 }
 
 func entriesUpdateConfirmEntry(entry harvest.Entry) error {
-	if entriesUpdateProject == "" {
-		entriesUpdateProject = strconv.FormatInt(entry.Project.ID, 10)
+	if entriesUpdateTask.str == "" {
+		entriesUpdateTask.SetId(&entry.Task.ID, &entry.Project.ID)
 	}
-	if entriesUpdateTask == "" {
-		entriesUpdateTask = strconv.FormatInt(entry.Task.ID, 10)
+	if entriesUpdateProject.str == "" {
+		entriesUpdateProject.SetId(&entry.Project.ID)
 	}
-	if entriesUpdateHours == "" {
-		entriesUpdateHours = entry.Hours.Duration().String()
+	if entriesUpdateHours.str == "" {
+		entriesUpdateHours.SetHours(&entry.Hours)
 	}
-	if entriesUpdateNotes == "" && !entriesUpdateClearNotes {
-		entriesUpdateNotes = entry.Notes
+	if entriesUpdateNotes.str == "" && !entriesUpdateClearNotes {
+		entriesUpdateNotes.str = entry.Notes
 	}
-	if entriesUpdateDate == "" {
-		entriesUpdateDate = entry.Date
+	if entriesUpdateDate.str == "" {
+		_ = entriesUpdateDate.Set(entry.Date)
 	}
 
 	fields := []prompt.Confirmation{
-		{"Project", &entriesUpdateProject, validProjectId},
-		{"Task", &entriesUpdateTask, validTaskId},
-		{"Hours", &entriesUpdateHours, validHours},
-		{"Notes", &entriesUpdateNotes, validNotes},
-		{"Date", &entriesUpdateDate, validDate},
+		{"Project", &entriesUpdateProject},
+		{"Task", &entriesUpdateTask},
+		{"Hours", &entriesUpdateHours},
+		{"Notes", &entriesUpdateNotes},
+		{"Date", &entriesUpdateDate},
 	}
 	if err := prompt.ConfirmAll(fields); err != nil {
 		return err

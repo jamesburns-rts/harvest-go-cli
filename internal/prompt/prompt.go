@@ -9,10 +9,14 @@ import (
 )
 
 type (
+	Value interface {
+		String() string
+		Set(string) error
+	}
+
 	Confirmation struct {
-		Title      string
-		Value      *string
-		Validation promptui.ValidateFunc
+		Title string
+		Value Value
 	}
 )
 
@@ -68,18 +72,20 @@ func ForString(title string, validation func(s string) error) (string, error) {
 
 func ConfirmAll(confirmations []Confirmation) (err error) {
 	for _, c := range confirmations {
-		if *c.Value, err = Confirm(c); err != nil {
+		if result, err := Confirm(c); err != nil {
 			return err
+		} else {
+			return c.Value.Set(result)
 		}
 	}
 	return nil
 }
 
 func Confirm(c Confirmation) (string, error) {
-	value := strings.ReplaceAll(*c.Value, "\n", " \\")
+	value := strings.ReplaceAll(c.Value.String(), "\n", " \\")
 	prompt := promptui.Prompt{
 		Label:     c.Title,
-		Validate:  c.Validation,
+		Validate:  c.Value.Set,
 		Default:   value,
 		AllowEdit: true,
 		Templates: &promptui.PromptTemplates{

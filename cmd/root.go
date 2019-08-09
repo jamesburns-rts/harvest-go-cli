@@ -88,13 +88,13 @@ func rootOutputSimple(s rootSummary) error {
     Time worked: %v
     Logged today: %v
 `,
-		s.RequiredHours,
-		s.MonthLoggedHours,
-		s.BillableHours,
+		fmtHours(&s.RequiredHours),
+		fmtHours(&s.MonthLoggedHours),
+		fmtHours(&s.BillableHours),
 		100*s.BillableHours/s.MonthLoggedHours,
-		s.NonBillableHours,
-		s.WorkedTodayHours,
-		s.TodayLoggedHours,
+		fmtHours(&s.NonBillableHours),
+		fmtHours(s.WorkedTodayHours),
+		fmtHours(&s.TodayLoggedHours),
 	)
 	return nil
 }

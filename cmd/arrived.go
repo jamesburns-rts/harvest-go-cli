@@ -7,56 +7,45 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"strings"
 	"time"
 )
+
+var arrivedClear bool
 
 var arrivedCmd = &cobra.Command{
 	Use:   "arrived [TIME]",
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Mark time arrived at work",
-	Long:  `Mark time arrived at work`,
+	Long:  `Mark time arrived at work. [TIME] should be of format hh:mm but defaults to the current time.`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		var timeArrived time.Time
+		if arrivedClear {
+			timers.Records.Arrived = ""
+			fmt.Println("cleared")
+		} else {
 
-		// gather inputs
-		if timeArrived, err = parseTime(args); err != nil {
-			return errors.New("for [time]: expected time format of hh:mm")
+			timeArrived := time.Now()
+
+			// gather inputs
+			if len(args) > 0 {
+				if timeArrived, err = util.StringToTime(args[0]); err != nil {
+					return errors.New("for [TIME]")
+				}
+			}
+
+			// set time arrived
+			timers.Records.SetArrived(timeArrived)
+
+			// output
+			fmt.Printf("Marking time arrived as %s\n", formatArrived(timeArrived))
 		}
-
-		// set time arrived
-		timers.Records.SetArrived(timeArrived)
-
-		// output
-		fmt.Printf("Marking time arrived as %s\n", formatArrived(timeArrived))
 		return writeConfig()
 	}),
 }
 
 func init() {
 	rootCmd.AddCommand(arrivedCmd)
-}
-
-func parseTime(args []string) (t time.Time, err error) {
-	t = time.Now()
-
-	if len(args) > 0 {
-		str := strings.ToUpper(args[0])
-
-		var tm time.Time
-		if !strings.HasSuffix(str, "PM") && !strings.HasSuffix(str, "AM") {
-			tm, err = time.Parse("15:04", str)
-		} else {
-			tm, err = time.Parse(time.Kitchen, str)
-		}
-		if err != nil {
-			return t, err
-		}
-		return time.Date(t.Year(), t.Month(), t.Day(), tm.Hour(), tm.Minute(), 0, 0, t.Location()), nil
-	}
-
-	return t, nil
+	arrivedCmd.Flags().BoolVarP(&arrivedClear, "clear", "c", false, "Clear the current arrived time")
 }
 
 func formatArrived(t time.Time) string {

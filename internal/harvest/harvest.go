@@ -49,12 +49,12 @@ type (
 	}
 
 	EntryUpdateOptions struct {
-		Entry       Entry
-		ProjectId   *int64
-		TaskId      *int64
-		Date        *time.Time
-		Hours       *Hours
-		Notes       *string
+		Entry     Entry
+		ProjectId *int64
+		TaskId    *int64
+		Date      *time.Time
+		Hours     *Hours
+		Notes     *string
 	}
 
 	LogTimeOptions struct {

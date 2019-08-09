@@ -27,10 +27,10 @@ import (
 	"time"
 )
 
-var entriesProject string
-var entriesTask string
-var entriesToDate string
-var entriesFromDate string
+var entriesProject projectArg
+var entriesTask taskArg
+var entriesToDate dateArg
+var entriesFromDate dateArg
 
 var entriesCmd = &cobra.Command{
 	Use:   "entries [DATE]",
@@ -39,27 +39,21 @@ var entriesCmd = &cobra.Command{
 	Long:  `List time entries you have entered already`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		var options harvest.EntryListOptions
+		options := harvest.EntryListOptions{
+			To:        entriesToDate.date,
+			From:      entriesFromDate.date,
+			TaskId:    entriesTask.taskId,
+			ProjectId: entriesTask.projectId,
+		}
 
-		// gather inputs
-		if options.To, err = util.StringToDate(entriesToDate); err != nil {
-			return errors.Wrap(err, "for --to")
+		if entriesProject.projectId != nil {
+			options.ProjectId = entriesProject.projectId
 		}
-		if options.From, err = util.StringToDate(entriesFromDate); err != nil {
-			return errors.Wrap(err, "for --from")
-		}
-		if options.TaskId, options.ProjectId, err = harvest.ParseTaskId(entriesTask); err != nil {
-			return errors.Wrap(err, "for --task")
-		}
-		if entriesProject != "" {
-			if options.ProjectId, err = harvest.ParseProjectId(entriesProject); err != nil {
-				return errors.Wrap(err, "for --project")
-			}
-		}
+
 		if len(args) > 0 {
 			var onDate *time.Time
 			if onDate, err = util.StringToDate(args[0]); err != nil {
-				return errors.Wrap(err, "for [date]")
+				return errors.Wrap(err, "for [DATE]")
 			}
 			options.From = onDate
 			options.To = onDate
@@ -106,8 +100,8 @@ func entriesOutputTable(entries []harvest.Entry) error {
 
 func init() {
 	rootCmd.AddCommand(entriesCmd)
-	entriesCmd.Flags().StringVarP(&entriesProject, "project", "p", "", "Project ID/alias by which to filter")
-	entriesCmd.Flags().StringVarP(&entriesTask, "task", "t", "", "Task ID/alias by which to filter")
-	entriesCmd.Flags().StringVar(&entriesToDate, "to", "", "Date by which to filter by entries on or before [see date section in root]")
-	entriesCmd.Flags().StringVar(&entriesFromDate, "from", "", "Date by which to filter by entries on or after [see date section in root]")
+	entriesCmd.Flags().VarP(&entriesProject, "project", "p", "Project ID/alias by which to filter")
+	entriesCmd.Flags().VarP(&entriesTask, "task", "t", "Task ID/alias by which to filter")
+	entriesCmd.Flags().Var(&entriesToDate, "to", "Date by which to filter by entries on or before [see date section in root]")
+	entriesCmd.Flags().Var(&entriesFromDate, "from", "Date by which to filter by entries on or after [see date section in root]")
 }

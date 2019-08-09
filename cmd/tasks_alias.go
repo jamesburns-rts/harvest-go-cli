@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/pkg/errors"
@@ -26,10 +25,10 @@ import (
 	"strconv"
 )
 
-var tasksAliasTaskId string
-var tasksAliasProjectId string
-var tasksAliasNotes string
-var tasksAliasDuration string
+var tasksAliasTaskId int64
+var tasksAliasProject projectArg
+var tasksAliasNotes stringArg
+var tasksAliasDuration hoursArg
 
 var tasksAliasCmd = &cobra.Command{
 	Use:   "alias [ALIAS] [TASK_ID]",
@@ -62,26 +61,23 @@ var tasksAliasCmd = &cobra.Command{
 		}
 
 		// get projectId maybe
-		if tasksAliasProjectId != "" {
-			if projectId, err = harvest.ParseProjectId(tasksAliasProjectId); err != nil {
-				return errors.Wrap(err, "getting project")
-			}
+		if tasksAliasProject.str != "" {
+			projectId = tasksAliasProject.projectId
 		}
 
 		// get task ID
 		if len(args) > 1 {
 			if id, err := strconv.ParseInt(args[1], 10, 64); err != nil {
-				return errors.Wrap(err, "for [taskID]")
+				return errors.Wrap(err, "for [TASK_ID]")
 			} else {
 				taskId = &id
 			}
 		}
-		if tasksAliasTaskId != "" {
-			if id, err := strconv.ParseInt(tasksAliasTaskId, 10, 64); err != nil {
-				return errors.Wrap(err, "for --task")
-			} else {
-				taskId = &id
-			}
+		if tasksAliasTaskId != -1 {
+			taskId = &tasksAliasTaskId
+		}
+		if tasksAliasDuration.str != "" {
+			defaultDuration = tasksAliasDuration.hours
 		}
 
 		if taskId == nil {
@@ -102,13 +98,8 @@ var tasksAliasCmd = &cobra.Command{
 			}
 		}
 
-		if tasksAliasNotes != "" {
-			defaultNotes = &tasksAliasNotes
-		}
-		if tasksAliasDuration != "" {
-			if defaultDuration, err = ParseHours(tasksAliasDuration); err != nil {
-				return errors.Wrap(err, "for --default-duration")
-			}
+		if tasksAliasNotes.str != "" {
+			defaultNotes = &tasksAliasNotes.str
 		}
 
 		// set alias
@@ -141,8 +132,8 @@ func init() {
 	tasksCmd.AddCommand(tasksAliasCmd)
 	tasksAliasCmd.AddCommand(timeTasksAliasDeleteCmd)
 
-	tasksAliasCmd.Flags().StringVarP(&tasksAliasProjectId, "project", "p", "", "project ID/alias the task is for")
-	tasksAliasCmd.Flags().StringVarP(&tasksAliasTaskId, "task", "t", "", "Task ID the task is for")
-	tasksAliasCmd.Flags().StringVarP(&tasksAliasNotes, "default-notes", "m", "", "Default notes to use when logging time")
-	tasksAliasCmd.Flags().StringVarP(&tasksAliasDuration, "default-duration", "d", "", "Default duration to use when logging time")
+	tasksAliasCmd.Flags().VarP(&tasksAliasProject, "project", "p", "project ID/alias the task is for")
+	tasksAliasCmd.Flags().Int64VarP(&tasksAliasTaskId, "task", "t", -1, "Task ID the task is for")
+	tasksAliasCmd.Flags().VarP(&tasksAliasNotes, "default-notes", "m", "Default notes to use when logging time")
+	tasksAliasCmd.Flags().VarP(&tasksAliasDuration, "default-duration", "d", "Default duration to use when logging time")
 }

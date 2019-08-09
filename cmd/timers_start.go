@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-var timersStartTaskId string
-var timersStartEntryId string
+var timersStartTask taskArg
+var timersStartEntryId int64
 var timersStartDoNotSync bool
 var timersStartNotes string
 
@@ -23,13 +23,6 @@ var timersStartCmd = &cobra.Command{
 
 		// gather inputs
 		name = args[0]
-
-		if timersStartEntryId != "" {
-
-		} else {
-
-		}
-
 
 		existing, ok := timers.Records.Timers[name]
 		if ok {
@@ -52,9 +45,9 @@ var timersStartCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(timersStartCmd)
-	timersStartCmd.Flags().StringVarP(&timersStartTaskId, "task", "t", "",
+	timersStartCmd.Flags().VarP(&timersStartTask, "task", "t",
 		"Associate timer with a task and sync the timer with harvest")
-	timersStartCmd.Flags().StringVarP(&timersStartTaskId, "entry", "e", "",
+	timersStartCmd.Flags().Int64VarP(&timersStartEntryId, "entry", "e", -1,
 		"Associate timer with a time entry and sync the timer with harvest")
 	timersStartCmd.Flags().BoolVar(&timersStartDoNotSync, "do-not-sync", false, "Prevent syncing with harvest timers")
 	timersStartCmd.Flags().StringVarP(&timersStartNotes, "message", "m", "", "Append notes to the timer")

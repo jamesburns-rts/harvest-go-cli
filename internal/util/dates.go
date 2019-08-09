@@ -148,6 +148,23 @@ func stringToDateFrom(str string, now time.Time) (date *time.Time, err error) {
 	return
 }
 
+func StringToTime(str string) (time.Time, error) {
+	now := time.Now()
+
+	str = strings.ToUpper(str)
+	str = strings.ReplaceAll(str, "P.M.", "PM")
+	str = strings.ReplaceAll(str, "A.M.", "AM")
+
+	layouts := []string{time.Kitchen, "15:04"}
+	for _, layout := range layouts {
+		t, err := time.ParseInLocation(layout, str, time.Local)
+		if err == nil {
+			return time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, t.Location()), nil
+		}
+	}
+	return now, errors.New("expected format of hh:mm or h:mmPM")
+}
+
 var dayOfWeekMap = map[string]time.Weekday{
 	"mon": time.Monday,
 	"tue": time.Tuesday,
