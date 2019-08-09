@@ -197,6 +197,30 @@ func selectTask(projectId int64, ctx context.Context) (taskId *int64, err error)
 	return &project.Tasks[selected].ID, err
 }
 
+func selectProjectAlias() (alias string, err error) {
+	var aliases []string
+	for k := range config.Harvest.ProjectAliases {
+		aliases = append(aliases, k)
+	}
+	if selection, err := prompt.ForSelection("Alias", aliases); err != nil {
+		return "", err
+	} else {
+		return aliases[selection], nil
+	}
+}
+
+func selectTaskAlias() (alias string, err error) {
+	var aliases []string
+	for k := range config.Harvest.TaskAliases {
+		aliases = append(aliases, k)
+	}
+	if selection, err := prompt.ForSelection("Alias", aliases); err != nil {
+		return "", err
+	} else {
+		return aliases[selection], nil
+	}
+}
+
 func fmtHours(h *Hours) string {
 	if h == nil {
 		return "n/a"
@@ -256,4 +280,3 @@ func validAlias(str string) error {
 	}
 	return nil
 }
-

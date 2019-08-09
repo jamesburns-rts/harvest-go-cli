@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/jamesburns-rts/go-harvest v0.0.0-20190805124353-5c9f7160b757
+	github.com/lithammer/fuzzysearch v1.0.2
 	github.com/manifoldco/promptui v0.3.2
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0

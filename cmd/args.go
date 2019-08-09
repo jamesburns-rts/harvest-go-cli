@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"strconv"
@@ -108,6 +109,14 @@ func (h *hoursArg) SetHours(hours *Hours) {
 	}
 }
 
+func (h *hoursArg) prompt(title string) error {
+	str, err := prompt.ForString(title, validHours)
+	if err != nil {
+		return err
+	}
+	return h.Set(str)
+}
+
 // string arg
 func (s *stringArg) String() string {
 	return s.str
@@ -120,6 +129,14 @@ func (s *stringArg) Set(str string) (err error) {
 
 func (s *stringArg) Type() string {
 	return "string"
+}
+
+func (s *stringArg) prompt(title string) error {
+	str, err := prompt.ForString(title, nil)
+	if err != nil {
+		return err
+	}
+	return s.Set(str)
 }
 
 // date arg

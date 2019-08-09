@@ -46,8 +46,8 @@ var projectsCmd = &cobra.Command{
 }
 
 func projectsOutputSimple(projects []harvest.Project) error {
-	for _, proj := range projects {
-		fmt.Printf("%v %v\n", proj.ID, proj.Name)
+	for _, p := range projects {
+		fmt.Printf("%v %v\n", p.ID, p.Name)
 	}
 	return nil
 }

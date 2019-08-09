@@ -36,13 +36,15 @@ var entriesUpdateAppendHours bool
 var entriesUpdateSelectTask bool
 var entriesUpdateConfirm bool
 var entriesUpdateLast bool
+var entriesUpdateLastOf taskArg
 var entriesUpdateClearNotes bool
 
 var entriesUpdateCmd = &cobra.Command{
 	Use:   "update [ENTRY_ID]",
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Update time entry",
-	Long:  `Update time entry`,
+	Long: `Update time entry where the time entry chosen by either ENTRY_ID, --last, --last-of, 
+or selection (if none provided)`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		var op harvest.EntryUpdateOptions
@@ -106,17 +108,18 @@ var entriesUpdateCmd = &cobra.Command{
 
 func init() {
 	entriesCmd.AddCommand(entriesUpdateCmd)
-	entriesUpdateCmd.Flags().VarP(&entriesUpdateProject, "project", "p", "")
-	entriesUpdateCmd.Flags().VarP(&entriesUpdateTask, "task", "t", "")
-	entriesUpdateCmd.Flags().VarP(&entriesUpdateHours, "hours", "H", "")
-	entriesUpdateCmd.Flags().VarP(&entriesUpdateNotes, "message", "m", "")
-	entriesUpdateCmd.Flags().VarP(&entriesUpdateDate, "date", "d", "")
-	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendNotes, "append-notes", false, "")
-	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendHours, "append-hours", false, "")
-	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateSelectTask, "select-task", false, "")
-	entriesUpdateCmd.Flags().BoolVarP(&entriesUpdateConfirm, "confirm", "c", false, "")
-	entriesUpdateCmd.Flags().BoolVarP(&entriesUpdateLast, "last", "l", false, "")
-	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateClearNotes, "clear-notes", false, "")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateProject, "project", "p", "Project to move entry to")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateTask, "task", "t", "Task to move entry to")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateHours, "hours", "H", "Duration to update entry's to (or append)")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateNotes, "message", "m", "Message to update entry's to (or append)")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateDate, "date", "d", "Date to update entry's to (see root's DATES section)")
+	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendNotes, "append-notes", false, "Append notes instead of replacing")
+	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendHours, "append-hours", false, "Append hours instead of replacing")
+	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateSelectTask, "select-task", false, "Select project/task to update to")
+	entriesUpdateCmd.Flags().BoolVarP(&entriesUpdateConfirm, "confirm", "c", false, "Confirm all fields before updating")
+	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateLast, "last", false, "Update last time entry")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateLastOf, "last-of", "l", "Update last time entry of given task")
+	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateClearNotes, "clear-notes", false, "Set the notes to empty")
 }
 
 func entriesUpdateConfirmEntry(entry harvest.Entry) error {
@@ -160,12 +163,21 @@ func entriesUpdateGetEntry(args []string, ctx context.Context) (entry harvest.En
 			}
 		}
 	} else {
-		entries, err := harvest.GetEntries(nil, ctx)
+		op := &harvest.EntryListOptions{
+			ProjectId: entriesUpdateLastOf.projectId,
+			TaskId:    entriesUpdateLastOf.taskId,
+		}
+		entries, err := harvest.GetEntries(op, ctx)
 		if err != nil {
 			return entry, err
 		}
-		if entriesUpdateLast {
+
+		if entriesUpdateLastOf.str != "" || entriesUpdateLast {
+			if len(entries) == 0 {
+				return entry, errors.New("no entries found")
+			}
 			entry = entries[0]
+
 		} else {
 			selected, err := prompt.ForSelection("Select entry", entries)
 			if err != nil {

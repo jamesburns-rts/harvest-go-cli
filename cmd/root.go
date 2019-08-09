@@ -46,7 +46,26 @@ type rootSummary struct {
 var rootCmd = &cobra.Command{
 	Use:   "harvest",
 	Short: "A commandline tool for all things Harvest Time Tracking",
-	Long:  `TODO - longer description`,
+	Long: `A commandline tool for all things Harvest Time Tracking
+
+ALIASES
+Projects and project tasks can be aliased to easy to remember words. These words 
+can then be used anywhere a project/task is needed. See 'harvest projects alias'
+and 'harvest tasks alias'
+
+HOURS
+Inputs of a duration type can be a couple formats:
+ - 1h15m: Human readable version with the number of hours and/or minutes
+ - 1.25: Decimal number of hours
+
+DATES
+Inputs of date type can be a few formats:
+ - yyyy-mm-dd: Standard ISO format, but hyphens are optional
+ - '-N': where N is any integer "days ago"
+ - 'mon[day]: Date of last Monday (only 'mon' is required)'
+ - 'tue[sday], etc: Date of Tuesday or other day of the week'
+ - 'yest[erday]: Date of the day before today
+`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		var harvestSummary harvest.MonthSummary

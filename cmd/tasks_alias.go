@@ -31,7 +31,7 @@ var tasksAliasNotes stringArg
 var tasksAliasDuration hoursArg
 
 var tasksAliasCmd = &cobra.Command{
-	Use:   "alias [ALIAS] [TASK_ID]",
+	Use:   "alias [ALIAS [TASK_ID]]",
 	Args:  cobra.MaximumNArgs(2),
 	Short: "Alias a task ID",
 	Long:  `Alias a task ID to a friendly string the can be used anywhere`,
@@ -119,9 +119,16 @@ var timeTasksAliasDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Delete a task ID alias",
 	Long:  ``,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		alias := args[0]
+		var alias string
+		if len(args) > 0 {
+			alias = args[0]
+		} else {
+			if alias, err = selectTaskAlias(); err != nil {
+				return err
+			}
+		}
 		delete(config.Harvest.TaskAliases, alias)
 
 		return writeConfig()

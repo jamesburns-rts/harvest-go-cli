@@ -27,7 +27,7 @@ var entriesDeleteCmd = &cobra.Command{
 	Use:   "delete ENTRY_ID",
 	Args:  cobra.ExactArgs(1),
 	Short: "Delete time entry",
-	Long:  `Delete time entry`,
+	Long:  `Delete time entry where ENTRY_ID is a positive integer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		var entryId int64

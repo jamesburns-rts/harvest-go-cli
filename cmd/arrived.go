@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
@@ -38,8 +39,15 @@ var arrivedCmd = &cobra.Command{
 
 			// output
 			fmt.Printf("Marking time arrived as %s\n", formatArrived(timeArrived))
+
+			_ = printWithFormat(outputMap{
+				config.OutputFormatSimple: func() error { return arrivedShowSimple(&timeArrived) },
+				config.OutputFormatTable:  func() error { return arrivedShowSimple(&timeArrived) },
+				config.OutputFormatJson:   func() error { return outputJson(timeArrived) },
+			})
 		}
 		return writeConfig()
+
 	}),
 }
 

@@ -36,7 +36,8 @@ var entriesCmd = &cobra.Command{
 	Use:   "entries [DATE]",
 	Args:  cobra.MaximumNArgs(1),
 	Short: "List time entries",
-	Long:  `List time entries you have entered already`,
+	Long: `List time entries you have entered already. For formats of DATE, see the DATES 
+section of the root command.`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		options := harvest.EntryListOptions{

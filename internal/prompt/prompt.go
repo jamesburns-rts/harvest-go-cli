@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
+	"github.com/manifoldco/promptui/list"
 	"strings"
 )
 
@@ -21,10 +23,16 @@ type (
 )
 
 func ForSelection(title string, options interface{}) (int, error) {
+
+	searcher := getSearcher(options)
+
 	prompt := promptui.Select{
-		Label:     title,
-		Items:     options,
-		Templates: getSelectionTemplate(title, options),
+		Label:             title,
+		Items:             options,
+		Size:              10,
+		Templates:         getSelectionTemplate(title, options),
+		StartInSearchMode: searcher != nil,
+		Searcher:          searcher,
 	}
 
 	i, _, err := prompt.Run()
@@ -42,15 +50,43 @@ func getSelectionTemplate(title string, options interface{}) *promptui.SelectTem
 	switch options.(type) {
 	case []harvest.Project:
 		return &promptui.SelectTemplates{
-			Active:   "{{ .Name }}",
-			Inactive: "{{ .Name | faint }}",
+			Active:   fmt.Sprintf("%s {{ .Name }}", promptui.IconSelect),
+			Inactive: "  {{ .Name | faint }}",
 			Selected: fmt.Sprintf("%s %s: {{ .Name }}", promptui.IconGood, title),
 		}
 	case []harvest.Task:
 		return &promptui.SelectTemplates{
-			Active:   "{{ .Name }}",
-			Inactive: "{{ .Name | faint }}",
+			Active:   fmt.Sprintf("%s {{ .Name }}", promptui.IconSelect),
+			Inactive: "  {{ .Name | faint }}",
 			Selected: fmt.Sprintf("%s %s: {{ .Name }}", promptui.IconGood, title),
+		}
+	case []string:
+		return &promptui.SelectTemplates{
+			Active:   fmt.Sprintf("%s {{ . }}", promptui.IconSelect),
+			Inactive: "  {{ . | faint }}",
+			Selected: fmt.Sprintf("%s %s: {{ . }}", promptui.IconGood, title),
+		}
+	default:
+		return nil
+	}
+}
+
+func getSearcher(options interface{}) list.Searcher {
+	switch options.(type) {
+	case []harvest.Project:
+		return func(input string, index int) bool {
+			project := options.([]harvest.Project)[index]
+			return fuzzy.Match(strings.ToLower(input), strings.ToLower(project.Name))
+		}
+	case []harvest.Task:
+		return func(input string, index int) bool {
+			task := options.([]harvest.Task)[index]
+			return fuzzy.Match(strings.ToLower(input), strings.ToLower(task.Name))
+		}
+	case []string:
+		return func(input string, index int) bool {
+			item := options.([]string)[index]
+			return fuzzy.Match(strings.ToLower(input), strings.ToLower(item))
 		}
 	default:
 		return nil

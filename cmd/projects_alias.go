@@ -18,26 +18,44 @@ package cmd
 import (
 	"context"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
 
 var projectsAliasCmd = &cobra.Command{
-	Use:   "alias [PROJECT_ID] [ALIAS]",
-	Args:  cobra.ExactArgs(2),
+	Use:   "alias [ALIAS [PROJECT_ID]]",
+	Args:  cobra.MaximumNArgs(2),
 	Short: "Alias a project ID",
 	Long:  `Alias a project ID to a friendly string the can be used anywhere`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		var projectId int64
-		var alias string
 
-		// gather inputs
-		if projectId, err = strconv.ParseInt(args[0], 10, 64); err != nil {
-			return errors.Wrap(err, "for [projectId]")
+		// get alias
+		var alias string
+		if len(args) > 0 {
+			alias = args[0]
+		} else {
+			if alias, err = prompt.ForString("Alias Name", validAlias); err != nil {
+				return err
+			}
 		}
-		alias = args[1]
+
+		// get project
+		if len(args) > 1 {
+			if projectId, err = strconv.ParseInt(args[1], 10, 64); err != nil {
+				return errors.Wrap(err, "for [PROJECT_ID]")
+			}
+		} else {
+			if p, err := selectProject(ctx); err != nil {
+				return err
+			} else {
+				projectId = *p
+			}
+
+		}
 
 		// set alias
 		config.Harvest.ProjectAliases[alias] = config.ProjectAlias{
@@ -49,13 +67,20 @@ var projectsAliasCmd = &cobra.Command{
 }
 
 var timeProjectsAliasDeleteCmd = &cobra.Command{
-	Use:   "delete [Alias]",
-	Args:  cobra.ExactArgs(1),
+	Use:   "delete [ALIAS]",
+	Args:  cobra.MaximumNArgs(1),
 	Short: "Delete a project ID alias",
 	Long:  ``,
-	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
+	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
-		alias := args[0]
+		var alias string
+		if len(args) > 0 {
+			alias = args[0]
+		} else {
+			if alias, err = selectProjectAlias(); err != nil {
+				return err
+			}
+		}
 		delete(config.Harvest.ProjectAliases, alias)
 
 		return writeConfig()
