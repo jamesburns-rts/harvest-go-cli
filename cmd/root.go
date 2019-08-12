@@ -97,6 +97,16 @@ Inputs of date type can be a few formats:
 }
 
 func rootOutputSimple(s rootSummary) error {
+
+	var shortMessage string
+	// todo make better
+	if s.Short >= 0 {
+		shortMessage = fmt.Sprintf("You are %s short", fmtHours(&s.Short))
+	} else {
+		s.Short *= -1
+		shortMessage = fmt.Sprintf("You are %s over", fmtHours(&s.Short))
+	}
+
 	fmt.Printf(`
     Month Required Hours: %v
     Month Logged Hours: %v
@@ -106,6 +116,8 @@ func rootOutputSimple(s rootSummary) error {
 
     Time worked: %v
     Logged today: %v
+
+    %s
 `,
 		fmtHours(&s.RequiredHours),
 		fmtHours(&s.MonthLoggedHours),
@@ -114,6 +126,7 @@ func rootOutputSimple(s rootSummary) error {
 		fmtHours(&s.NonBillableHours),
 		fmtHours(s.WorkedTodayHours),
 		fmtHours(&s.TodayLoggedHours),
+		shortMessage,
 	)
 	return nil
 }
@@ -126,6 +139,7 @@ func rootOutputTable(s rootSummary) error {
 		{"Month NonBillable Hours", fmtHours(&s.NonBillableHours)},
 		{"Time worked", fmtHours(s.WorkedTodayHours)},
 		{"Logged today", fmtHours(&s.TodayLoggedHours)},
+		{"Hours to go", fmtHours(&s.Short)},
 	})
 	table.Render()
 	return nil
@@ -143,13 +157,14 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	//cobra.OnInitialize(initConfig)
+	initConfig()
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.harvest.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, "config file (default is $HOME/.harvest.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", fmt.Sprintf(
 		"Format of output [%s]", strings.Join(config.OutputFormatOptions, ", ")))
 

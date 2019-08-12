@@ -14,12 +14,9 @@ CLI for everything Harvest
 * List projects, tasks, and entries with certain filters - `harvest (projects|tasks|entries)`
 * Log time against a task - `harvest log [TASK] [DURATION]`
 * Alias project and task IDs - `harvest (projects|tasks) alias [ID] [ALIAS]` 
+* Updating entries
 
 # Features In Development
 * Timers
-* Interactive Mode
 * Statistics like project weights
-* Updating entries
-* Moving entries
 * Short for today calculation
-* Submit timesheet

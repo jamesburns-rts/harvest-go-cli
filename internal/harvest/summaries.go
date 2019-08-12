@@ -14,6 +14,7 @@ type (
 		BillableHours    Hours
 		NonBillableHours Hours
 		TodayLoggedHours Hours
+		Short            Hours
 	}
 )
 
@@ -53,6 +54,10 @@ func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, erro
 	}
 
 	summary.MonthLoggedHours = summary.BillableHours + summary.NonBillableHours
+
+	// short
+	daysSoFar := util.WeekdaysBetween(startOfMonth, time.Now())
+	summary.Short = Hours(daysSoFar*8) - summary.MonthLoggedHours
 
 	return summary, nil
 }

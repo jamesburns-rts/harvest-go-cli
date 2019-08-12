@@ -39,7 +39,7 @@ func (t *taskArg) String() string {
 
 func (t *taskArg) Set(str string) (err error) {
 	t.str = str
-	t.projectId, t.taskId, err = harvest.ParseTaskId(str)
+	t.taskId, t.projectId, err = harvest.ParseTaskId(str)
 	return err
 }
 

@@ -13,19 +13,15 @@ var timersStartDoNotSync bool
 var timersStartNotes string
 
 var timersStartCmd = &cobra.Command{
-	Use:   "start [NAME]",
+	Use:   "start NAME",
 	Args:  cobra.ExactArgs(1),
 	Short: "Start a timer",
 	Long:  `Start a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
-		var name string
+		name := args[0]
 
-		// gather inputs
-		name = args[0]
-
-		existing, ok := timers.Records.Timers[name]
-		if ok {
+		if existing, ok := timers.Records.Timers[name]; ok {
 			existing.Running = true
 			existing.SetStarted(time.Now())
 			existing.Notes += timersStartNotes
@@ -39,7 +35,7 @@ var timersStartCmd = &cobra.Command{
 			t.SetStarted(time.Now())
 		}
 
-		return nil
+		return writeConfig()
 	}),
 }
 
@@ -50,5 +46,5 @@ func init() {
 	timersStartCmd.Flags().Int64VarP(&timersStartEntryId, "entry", "e", -1,
 		"Associate timer with a time entry and sync the timer with harvest")
 	timersStartCmd.Flags().BoolVar(&timersStartDoNotSync, "do-not-sync", false, "Prevent syncing with harvest timers")
-	timersStartCmd.Flags().StringVarP(&timersStartNotes, "message", "m", "", "Append notes to the timer")
+	timersStartCmd.Flags().StringVarP(&timersStartNotes, "notes", "n", "", "Append notes to the timer")
 }

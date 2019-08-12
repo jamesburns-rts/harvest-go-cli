@@ -55,6 +55,7 @@ type (
 		Date      *time.Time
 		Hours     *Hours
 		Notes     *string
+		Started   *time.Time
 	}
 
 	LogTimeOptions struct {
@@ -63,6 +64,13 @@ type (
 		Date      time.Time
 		Hours     Hours
 		Notes     string
+	}
+
+	TimerStartOptions struct {
+		TaskId    int64
+		ProjectId int64
+		StartTime *time.Time
+		Notes     *string
 	}
 )
 
@@ -287,16 +295,29 @@ func GetTimers(o *EntryListOptions, ctx context.Context) (entries []Entry, err e
 	return GetEntries(o, ctx)
 }
 
+func StartTimerEntry(o TimerStartOptions, ctx context.Context) (Entry, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating client")
+	}
+
+	options := o.toHarvestOptions()
+
+	entry, _, err := client.Timesheet.CreateTimeEntryViaStartEndTime(ctx, &options)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating time entry")
+	}
+
+	return convertEntry(*entry), nil
+}
+
 func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
 		return Entry{}, errors.Wrap(err, "creating client")
 	}
 
-	options, err := o.toHarvestOptions(ctx)
-	if err != nil {
-		return Entry{}, err
-	}
+	options := o.toHarvestOptions()
 
 	entry, _, err := client.Timesheet.CreateTimeEntryViaDuration(ctx, &options)
 	if err != nil {
@@ -369,7 +390,7 @@ func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 	return options
 }
 
-func (o LogTimeOptions) toHarvestOptions(ctx context.Context) (harvest.TimeEntryCreateViaDuration, error) {
+func (o LogTimeOptions) toHarvestOptions() harvest.TimeEntryCreateViaDuration {
 
 	var notes *string
 	if o.Notes != "" {
@@ -384,7 +405,24 @@ func (o LogTimeOptions) toHarvestOptions(ctx context.Context) (harvest.TimeEntry
 		SpentDate: &harvest.Date{Time: o.Date},
 		Hours:     &hours,
 		Notes:     notes,
-	}, nil
+	}
+}
+
+func (o TimerStartOptions) toHarvestOptions() harvest.TimeEntryCreateViaStartEndTime {
+	startTime := time.Now()
+	if o.StartTime != nil {
+		startTime = *o.StartTime
+	}
+
+	startedTime := startTime.Format(time.Kitchen)
+
+	return harvest.TimeEntryCreateViaStartEndTime{
+		ProjectId:   &o.ProjectId,
+		TaskId:      &o.TaskId,
+		SpentDate:   &harvest.Date{Time: startTime},
+		StartedTime: &startedTime,
+		Notes:       o.Notes,
+	}
 }
 
 func (o *EntryListOptions) includeTask(taskId *int64) bool {
@@ -412,6 +450,10 @@ func (o EntryUpdateOptions) toHarvestOptions() harvest.TimeEntryUpdate {
 	}
 	if o.Date != nil {
 		h.SpentDate = &harvest.Date{Time: *o.Date}
+	}
+	if o.Started != nil {
+		started := o.Started.Format(time.Kitchen)
+		h.StartedTime = &started
 	}
 
 	h.Notes = o.Notes
