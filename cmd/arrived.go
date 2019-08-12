@@ -37,9 +37,6 @@ var arrivedCmd = &cobra.Command{
 			// set time arrived
 			timers.Records.SetArrived(timeArrived)
 
-			// output
-			fmt.Printf("Marking time arrived as %s\n", formatArrived(timeArrived))
-
 			_ = printWithFormat(outputMap{
 				config.OutputFormatSimple: func() error { return arrivedShowSimple(&timeArrived) },
 				config.OutputFormatTable:  func() error { return arrivedShowSimple(&timeArrived) },

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
+	"log"
 	"time"
 )
 
@@ -76,6 +78,17 @@ func (t *Timer) StartedTime() *time.Time {
 	return &tm
 }
 
+func (t *Timer) RunningHours() *Hours {
+	dur := t.Duration
+	if t.Running {
+		if t.Started == "" {
+			log.Fatal("Running timer does not have start time")
+		}
+		dur += Hours(time.Now().Sub(*t.StartedTime()).Hours())
+	}
+	return &dur
+}
+
 func (t *Timer) Start(preventSync bool, ctx context.Context) (err error) {
 	if t.Running {
 		return nil
@@ -133,12 +146,8 @@ func (t *Timer) Stop(preventSync bool, ctx context.Context) (err error) {
 	if !t.Running {
 		return nil
 	}
+	t.Duration = *t.RunningHours()
 	t.Running = false
-	startedTime := t.StartedTime()
-	if startedTime == nil {
-		return errors.New("no start time started noted")
-	}
-	t.Duration = Hours((t.Duration.Duration() + time.Now().Sub(*startedTime)).Hours())
 	t.Started = ""
 
 	if t.SyncedEntryId != nil {
@@ -164,47 +173,11 @@ func (t *Timer) compareNotes(entryNotes string) {
 
 }
 
-func Start(name, notes string, taskId, projectId, entryId *int64) (Timer, error) {
-	if existing, ok := Records.Timers[name]; ok {
-		if taskId != nil {
-			existing.SyncedTaskId = taskId
-			existing.SyncedProjectId = projectId
-			existing.SyncedEntryId = entryId
+func SumTimeOn(names []string) (total Hours) {
+	for _, t := range Records.Timers {
+		if _, match := util.ContainsIgnoreCase(names, t.Name); match {
+			total += *t.RunningHours()
 		}
-		if !existing.Running {
-			existing.Running = true
-			existing.SetStarted(time.Now())
-		}
-		if notes != "" {
-			existing.Notes += "\n" + notes
-		}
-	} else {
 	}
-	return Timer{}, nil
-}
-
-func StartSynced(name, notes string, timeEntryId int64, ctx context.Context) (Timer, error) {
-
-	entry, err := harvest.RestartTimeEntry(timeEntryId, ctx)
-	if err != nil {
-		return Timer{}, err
-	}
-
-	if notes != "" {
-		entry.Notes = fmt.Sprintf("%s\n%s", entry.Notes, notes)
-	}
-
-	timer := Timer{
-		Name:          name,
-		Running:       entry.Running,
-		Duration:      entry.Hours,
-		SyncedTaskId:  &entry.Task.ID,
-		SyncedEntryId: &entry.ID,
-		Notes:         entry.Notes,
-	}
-	timer.SetStarted(*entry.TimerStarted)
-
-	Records.Timers[name] = timer
-
-	return timer, nil
+	return total
 }

@@ -80,6 +80,8 @@ Inputs of date type can be a few formats:
 		if arrived != nil && util.SameDay(*arrived, time.Now()) {
 			calc := Hours(time.Now().Sub(*arrived).Hours())
 			workedTodayHours = &calc
+
+			*workedTodayHours -= timers.SumTimeOn([]string{"lunch", "break"})
 		}
 
 		summary := rootSummary{
@@ -208,7 +210,7 @@ func initConfig() {
 
 	// clear old timers
 	for k, v := range timers.Records.Timers {
-		if !util.SameDay(*v.StartedTime(), time.Now()) {
+		if v.Started != "" && !util.SameDay(*v.StartedTime(), time.Now()) {
 			delete(timers.Records.Timers, k)
 		}
 	}
