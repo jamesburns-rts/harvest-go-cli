@@ -17,10 +17,12 @@ type (
 	}
 
 	ProjectAlias struct {
-		ProjectId int64 `yaml,json:"projectId"`
+		Name      string `yaml,json:"name"`
+		ProjectId int64  `yaml,json:"projectId"`
 	}
 
 	TaskAlias struct {
+		Name            string  `yaml,json:"name"`
 		TaskId          int64   `yaml,json:"taskId"`
 		ProjectId       int64   `yaml,json:"projectId"`
 		DefaultNotes    *string `yaml,json:"defaultNotes"`
@@ -36,6 +38,20 @@ type (
 
 var Harvest HarvestProperties
 var Cli CliProperties
+
+func SetTaskAlias(a TaskAlias) {
+	if Harvest.TaskAliases == nil {
+		Harvest.TaskAliases = make(map[string]TaskAlias)
+	}
+	Harvest.TaskAliases[a.Name] = a
+}
+
+func SetProjectAlias(a ProjectAlias) {
+	if Harvest.ProjectAliases == nil {
+		Harvest.ProjectAliases = make(map[string]ProjectAlias)
+	}
+	Harvest.ProjectAliases[a.Name] = a
+}
 
 type Options []string
 

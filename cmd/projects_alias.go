@@ -58,9 +58,10 @@ var projectsAliasCmd = &cobra.Command{
 		}
 
 		// set alias
-		config.Harvest.ProjectAliases[alias] = config.ProjectAlias{
+		config.SetProjectAlias(config.ProjectAlias{
+			Name:      alias,
 			ProjectId: projectId,
-		}
+		})
 
 		return writeConfig()
 	}),

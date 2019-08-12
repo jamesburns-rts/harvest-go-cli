@@ -29,6 +29,13 @@ type (
 
 var Records TrackingRecords
 
+func SetTimer(t Timer) {
+	if Records.Timers == nil {
+		Records.Timers = make(map[string]Timer)
+	}
+	Records.Timers[t.Name] = t
+}
+
 func (r *TrackingRecords) SetArrived(t time.Time) {
 	r.Arrived = t.Format(time.RFC3339)
 }
@@ -118,6 +125,7 @@ func (t *Timer) Start(preventSync bool, ctx context.Context) (err error) {
 			t.SyncedEntryId = &entry.ID
 		}
 	}
+	SetTimer(*t)
 	return nil
 }
 
@@ -130,8 +138,25 @@ func (t *Timer) Stop(preventSync bool, ctx context.Context) (err error) {
 	if startedTime == nil {
 		return errors.New("no start time started noted")
 	}
-	//dur := t.Duration.Duration() + time.Now().Sub(*startedTime)
-	//t.Started = ""
+	t.Duration = Hours((t.Duration.Duration() + time.Now().Sub(*startedTime)).Hours())
+	t.Started = ""
+
+	if t.SyncedEntryId != nil {
+		var entry harvest.Entry
+		if entry, err = harvest.GetEntry(*t.SyncedEntryId, ctx); err != nil {
+			return err
+		}
+
+		t.compareNotes(entry.Notes)
+
+		// out of sync
+		_, err := harvest.UpdateEntry(harvest.EntryUpdateOptions{
+			Entry: entry,
+			Hours: &t.Duration,
+		}, ctx)
+		return err
+	}
+	SetTimer(*t)
 	return nil
 }
 

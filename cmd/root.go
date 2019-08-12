@@ -99,7 +99,6 @@ Inputs of date type can be a few formats:
 func rootOutputSimple(s rootSummary) error {
 
 	var shortMessage string
-	// todo make better
 	if s.Short >= 0 {
 		shortMessage = fmt.Sprintf("You are %s short", fmtHours(&s.Short))
 	} else {
@@ -201,17 +200,6 @@ func initConfig() {
 	if err := viper.Unmarshal(conf); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-
-	// initialize maps and things
-	if conf.Harvest.ProjectAliases == nil {
-		conf.Harvest.ProjectAliases = make(map[string]config.ProjectAlias)
-	}
-	if conf.Harvest.TaskAliases == nil {
-		conf.Harvest.TaskAliases = make(map[string]config.TaskAlias)
-	}
-	if timers.Records.Timers == nil {
-		timers.Records.Timers = make(map[string]timers.Timer)
 	}
 
 	config.Harvest = conf.Harvest

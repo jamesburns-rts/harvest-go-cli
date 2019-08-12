@@ -21,26 +21,41 @@ var timersStartCmd = &cobra.Command{
 
 		name := args[0]
 
+		var t timers.Timer
 		if existing, ok := timers.Records.Timers[name]; ok {
-			existing.Running = true
-			existing.SetStarted(time.Now())
-			existing.Notes += timersStartNotes
+			t = existing
 		} else {
 			t := timers.Timer{
-				Name:    name,
-				Running: true,
-				//SyncedTaskId *int64 `yaml,json:"syncedTaskId"`
+				Name:  name,
 				Notes: timersStartNotes,
+				//SyncedTaskId *int64 `yaml,json:"syncedTaskId"`
 			}
 			t.SetStarted(time.Now())
 		}
 
+		if timersStartTask.str != "" {
+			// todo check for change?
+			t.SyncedProjectId = timersStartTask.projectId
+			t.SyncedTaskId = timersStartTask.taskId
+		}
+
+		if timersStartEntryId > 0 {
+			// todo check for change?
+			t.SyncedEntryId = &timersStartEntryId
+		}
+
+		t.Notes += timersStartNotes
+		if err := t.Start(timersStartDoNotSync, ctx); err != nil {
+			return err
+		}
+
+		timers.SetTimer(t)
 		return writeConfig()
 	}),
 }
 
 func init() {
-	rootCmd.AddCommand(timersStartCmd)
+	timersCmd.AddCommand(timersStartCmd)
 	timersStartCmd.Flags().VarP(&timersStartTask, "task", "t",
 		"Associate timer with a task and sync the timer with harvest")
 	timersStartCmd.Flags().Int64VarP(&timersStartEntryId, "entry", "e", -1,

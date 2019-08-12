@@ -103,12 +103,13 @@ var tasksAliasCmd = &cobra.Command{
 		}
 
 		// set alias
-		config.Harvest.TaskAliases[alias] = config.TaskAlias{
+		config.SetTaskAlias(config.TaskAlias{
+			Name:            alias,
 			TaskId:          *taskId,
 			ProjectId:       *projectId,
 			DefaultNotes:    defaultNotes,
 			DefaultDuration: defaultDuration,
-		}
+		})
 
 		return writeConfig()
 	}),
