@@ -36,6 +36,7 @@ import (
 
 var cfgFile string
 var outputFormat string
+var rootVersion bool
 
 type rootSummary struct {
 	harvest.MonthSummary
@@ -73,6 +74,11 @@ Inputs of date type can be a few formats:
  - 'yest[erday]: Date of the day before today
 `,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
+
+		if rootVersion {
+			fmt.Println("v0.9.1")
+			return nil
+		}
 
 		var harvestSummary harvest.MonthSummary
 		var workedTodayHours *Hours
@@ -188,17 +194,11 @@ func init() {
 	//cobra.OnInitialize(initConfig)
 	initConfig()
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, "config file (default is $HOME/.harvest.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", fmt.Sprintf(
 		"Format of output [%s]", strings.Join(config.OutputFormatOptions, ", ")))
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolVarP(&rootVersion, "version", "v", false, "Print the version of the application")
 }
 
 // initConfig reads in config file and ENV variables if set.
