@@ -15,8 +15,8 @@ CLI for everything Harvest
 * Log time against a task - `harvest log [TASK] [DURATION]`
 * Alias project and task IDs - `harvest (projects|tasks) alias [ID] [ALIAS]` 
 * Updating entries
+* Timers (at least local)
 
 # Features In Development
-* Timers
+* Timers syncing with harvest - maybe
 * Statistics like project weights
-* Short for today calculation
