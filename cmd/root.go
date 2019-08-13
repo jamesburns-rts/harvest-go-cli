@@ -47,7 +47,12 @@ type rootSummary struct {
 var rootCmd = &cobra.Command{
 	Use:   "harvest",
 	Short: "A commandline tool for all things Harvest Time Tracking",
-	Long: `A commandline tool for all things Harvest Time Tracking
+	Long: `   __ _____   ___ _   ________________    _________      _______   ____
+  / // / _ | / _ \ | / / __/ __/_  __/___/ ___/ __ \____/ ___/ /  /  _/
+ / _  / __ |/ , _/ |/ / _/_\ \  / / /___/ (_ / /_/ /___/ /__/ /___/ /  
+/_//_/_/ |_/_/|_||___/___/___/ /_/      \___/\____/    \___/____/___/  
+                                                                    
+A commandline tool for all things Harvest Time Tracking
 
 ALIASES
 Projects and project tasks can be aliased to easy to remember words. These words 
