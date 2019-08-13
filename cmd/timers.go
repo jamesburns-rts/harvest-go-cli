@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"time"
 )
@@ -39,7 +38,7 @@ func timersSimple() error {
 				duration += " - running"
 			}
 
-			fmt.Printf("%s: %s\n", t.Name, duration)
+			fmt.Printf("    %s: %s\n", t.Name, duration)
 		}
 	}
 	return nil
@@ -58,9 +57,6 @@ func timersTable() error {
 
 			started := ""
 			if t.Running {
-				if t.Started == "" {
-					return errors.New("No start time for running timer")
-				}
 				started = t.StartedTime().Format(time.Kitchen)
 			}
 			table.Append([]string{t.Name, fmtHours(t.RunningHours()), started})

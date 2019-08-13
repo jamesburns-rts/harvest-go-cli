@@ -60,31 +60,23 @@ func (t *Timer) SetStarted(tm time.Time) {
 	t.Started = tm.Format(time.RFC3339)
 }
 
-func (t *Timer) ClearStarted(tm time.Time) {
-	t.Started = ""
-}
-
-func (t *Timer) StartedTime() *time.Time {
+func (t *Timer) StartedTime() time.Time {
 	if t.Started == "" {
-		return nil
+		log.Fatal(fmt.Sprintf("Timer %s has no start time", t.Name))
 	}
 
 	tm, err := time.Parse(time.RFC3339, t.Started)
 	if err != nil {
-		fmt.Println("Warning: Bad time format in 'timers.timers[].started'")
-		return nil
+		log.Fatal(fmt.Sprintf("Timer %s has invalid start time", t.Name))
 	}
 
-	return &tm
+	return tm
 }
 
 func (t *Timer) RunningHours() *Hours {
 	dur := t.Duration
 	if t.Running {
-		if t.Started == "" {
-			log.Fatal("Running timer does not have start time")
-		}
-		dur += Hours(time.Now().Sub(*t.StartedTime()).Hours())
+		dur += Hours(time.Now().Sub(t.StartedTime()).Hours())
 	}
 	return &dur
 }
@@ -116,9 +108,10 @@ func (t *Timer) Start(preventSync bool, ctx context.Context) (err error) {
 			if entry.Running {
 				t.SetStarted(*entry.TimerStarted)
 			} else {
+				started := t.StartedTime()
 				_, err := harvest.UpdateEntry(harvest.EntryUpdateOptions{
 					Entry:   entry,
-					Started: t.StartedTime(),
+					Started: &started,
 				}, ctx)
 				return err
 			}

@@ -40,6 +40,7 @@ var outputFormat string
 type rootSummary struct {
 	harvest.MonthSummary
 	WorkedTodayHours *Hours
+	Timers           map[string]timers.Timer
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -87,13 +88,22 @@ Inputs of date type can be a few formats:
 		summary := rootSummary{
 			MonthSummary:     harvestSummary,
 			WorkedTodayHours: workedTodayHours,
+			Timers:           timers.Records.Timers,
 		}
 
 		// print
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return rootOutputSimple(summary) },
 			config.OutputFormatTable:  func() error { return rootOutputTable(summary) },
-			config.OutputFormatJson:   func() error { return outputJson(summary) },
+			config.OutputFormatJson: func() error {
+				for k, v := range summary.Timers {
+					if v.Running {
+						v.Duration = *v.RunningHours()
+						summary.Timers[k] = v
+					}
+				}
+				return outputJson(summary)
+			},
 		})
 	}),
 }
@@ -102,10 +112,10 @@ func rootOutputSimple(s rootSummary) error {
 
 	var shortMessage string
 	if s.Short >= 0 {
-		shortMessage = fmt.Sprintf("You are %s short", fmtHours(&s.Short))
+		shortMessage = fmt.Sprintf("You are %s short for today", fmtHours(&s.Short))
 	} else {
 		s.Short *= -1
-		shortMessage = fmt.Sprintf("You are %s over", fmtHours(&s.Short))
+		shortMessage = fmt.Sprintf("You are %s over for today", fmtHours(&s.Short))
 	}
 
 	fmt.Printf(`
@@ -117,8 +127,6 @@ func rootOutputSimple(s rootSummary) error {
 
     Time worked: %v
     Logged today: %v
-
-    %s
 `,
 		fmtHours(&s.RequiredHours),
 		fmtHours(&s.MonthLoggedHours),
@@ -127,8 +135,16 @@ func rootOutputSimple(s rootSummary) error {
 		fmtHours(&s.NonBillableHours),
 		fmtHours(s.WorkedTodayHours),
 		fmtHours(&s.TodayLoggedHours),
-		shortMessage,
 	)
+
+	if len(timers.Records.Timers) > 0 {
+		fmt.Println()
+		_ = timersSimple()
+	}
+
+	fmt.Println()
+	fmt.Println(shortMessage)
+
 	return nil
 }
 func rootOutputTable(s rootSummary) error {
@@ -143,6 +159,12 @@ func rootOutputTable(s rootSummary) error {
 		{"Hours to go", fmtHours(&s.Short)},
 	})
 	table.Render()
+
+	if len(timers.Records.Timers) > 0 {
+		fmt.Println("Timers:")
+		_ = timersTable()
+	}
+
 	return nil
 }
 
@@ -210,7 +232,7 @@ func initConfig() {
 
 	// clear old timers
 	for k, v := range timers.Records.Timers {
-		if v.Started != "" && !util.SameDay(*v.StartedTime(), time.Now()) {
+		if !util.SameDay(v.StartedTime(), time.Now()) {
 			delete(timers.Records.Timers, k)
 		}
 	}
