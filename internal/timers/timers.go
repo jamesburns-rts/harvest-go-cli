@@ -141,7 +141,6 @@ func (t *Timer) Stop(preventSync bool, ctx context.Context) (err error) {
 	}
 	t.Duration = *t.RunningHours()
 	t.Running = false
-	t.Started = ""
 
 	if t.SyncedEntryId != nil {
 		var entry harvest.Entry
