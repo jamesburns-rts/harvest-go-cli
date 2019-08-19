@@ -228,8 +228,11 @@ func fmtHours(h *Hours) string {
 	if config.Cli.TimeDeltaFormat == config.TimeDeltaFormatHuman {
 		if *h < 1 {
 			return fmt.Sprintf("%0.0fm", h.Minutes())
+		} else if h.Minutes() == 0 {
+			return fmt.Sprintf("%0.0fh", h.Hours())
+		} else {
+			return fmt.Sprintf("%0.0fh %0.0fm", h.Hours(), h.Minutes())
 		}
-		return fmt.Sprintf("%0.0fh %0.0fm", h.Hours(), h.Minutes())
 	}
 
 	// else config.TimeDeltaFormatDecimal or other

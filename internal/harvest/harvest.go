@@ -4,8 +4,7 @@ import (
 	"context"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 
-	//"github.com/becoded/go-harvest/harvest"
-	"github.com/jamesburns-rts/go-harvest/harvest"
+	"github.com/becoded/go-harvest/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/pkg/errors"
@@ -38,6 +37,7 @@ type (
 		Task         Task       `json:"task"`
 		Running      bool       `json:"running"`
 		TimerStarted *time.Time `json:"timerStarted"`
+		Billable     bool       `json:"billable"`
 	}
 
 	EntryListOptions struct {
@@ -343,10 +343,11 @@ func RestartTimeEntry(timeEntryId int64, ctx context.Context) (Entry, error) {
 
 func convertEntry(e harvest.TimeEntry) Entry {
 	entry := Entry{
-		ID:      *e.Id,
-		Hours:   Hours(*e.Hours),
-		Date:    (*e.SpentDate).String(),
-		Running: *e.IsRunning,
+		ID:       *e.Id,
+		Hours:    Hours(*e.Hours),
+		Date:     (*e.SpentDate).String(),
+		Running:  *e.IsRunning,
+		Billable: *e.Billable,
 		Project: Project{
 			ID:   *e.Project.Id,
 			Name: *e.Project.Name,
@@ -414,13 +415,11 @@ func (o TimerStartOptions) toHarvestOptions() harvest.TimeEntryCreateViaStartEnd
 		startTime = *o.StartTime
 	}
 
-	startedTime := startTime.Format(time.Kitchen)
-
 	return harvest.TimeEntryCreateViaStartEndTime{
 		ProjectId:   &o.ProjectId,
 		TaskId:      &o.TaskId,
 		SpentDate:   &harvest.Date{Time: startTime},
-		StartedTime: &startedTime,
+		StartedTime: &harvest.Time{Time: startTime},
 		Notes:       o.Notes,
 	}
 }
@@ -452,8 +451,7 @@ func (o EntryUpdateOptions) toHarvestOptions() harvest.TimeEntryUpdate {
 		h.SpentDate = &harvest.Date{Time: *o.Date}
 	}
 	if o.Started != nil {
-		started := o.Started.Format(time.Kitchen)
-		h.StartedTime = &started
+		h.StartedTime = &harvest.Time{Time: *o.Started}
 	}
 
 	h.Notes = o.Notes

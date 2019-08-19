@@ -46,7 +46,7 @@ func CalculateMonthSummary(t time.Time, ctx context.Context) (MonthSummary, erro
 		}
 
 		// total hours
-		if e.Project.Billable {
+		if e.Billable {
 			summary.BillableHours += e.Hours
 		} else {
 			summary.NonBillableHours += e.Hours

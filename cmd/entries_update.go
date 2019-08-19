@@ -98,7 +98,7 @@ or selection (if none provided)`,
 			return errors.Wrap(err, "problem updating entry")
 		} else {
 			return printWithFormat(outputMap{
-				config.OutputFormatSimple: func() error { return outputSuccess() },
+				config.OutputFormatSimple: func() error { return outputSuccess(entry) },
 				config.OutputFormatTable:  func() error { return outputEntryTable(entry) },
 				config.OutputFormatJson:   func() error { return outputJson(entry) },
 			})

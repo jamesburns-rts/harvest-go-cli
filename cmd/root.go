@@ -76,7 +76,7 @@ Inputs of date type can be a few formats:
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		if rootVersion {
-			fmt.Println("v0.9.1")
+			fmt.Println("v0.9.2")
 			return nil
 		}
 

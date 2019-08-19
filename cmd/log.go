@@ -14,6 +14,9 @@ var logProject projectArg
 var logNotes stringArg
 var logDate dateArg
 var logDuration hoursArg
+// todo confirm flag
+// todo better output
+// Todo move to becoded/go-harvest
 
 var logCmd = &cobra.Command{
 	Use:   "log [TASK [DURATION]]",
@@ -96,28 +99,35 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 
 		// print
 		return printWithFormat(outputMap{
-			config.OutputFormatSimple: func() error { return outputSuccess() },
+			config.OutputFormatSimple: func() error { return outputSuccess(entry) },
 			config.OutputFormatTable:  func() error { return outputEntryTable(entry) },
 			config.OutputFormatJson:   func() error { return outputJson(entry) },
 		})
 	}),
 }
 
-func outputSuccess() error {
-	fmt.Println("Successful")
-	return nil
-}
-
-func outputEntryTable(entry harvest.Entry) error {
-	table := createTable([]string{"Key", "Value"})
-	table.AppendBulk([][]string{
+func entryOutputRows(entry harvest.Entry) [][]string {
+	return [][]string{
 		{"ID", fmt.Sprintf("%v", entry.ID)},
 		{"Project", entry.Project.Name},
 		{"Task", entry.Task.Name},
 		{"Notes", entry.Notes},
 		{"Date", entry.Date},
 		{"Hours", fmtHours(&entry.Hours)},
-	})
+	}
+}
+
+func outputSuccess(entry harvest.Entry) error {
+	fmt.Println()
+	for _, r := range entryOutputRows(entry) {
+		fmt.Printf("%s: %s\n", r[0], r[1])
+	}
+	return nil
+}
+
+func outputEntryTable(entry harvest.Entry) error {
+	table := createTable([]string{"Key", "Value"})
+	table.AppendBulk(entryOutputRows(entry))
 	table.Render()
 	return nil
 }
