@@ -6,6 +6,7 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/spf13/cobra"
+	"sort"
 	"time"
 )
 
@@ -26,9 +27,11 @@ var timersCmd = &cobra.Command{
 }
 
 func timersSimple() error {
+
+	var strs []string
 	if timersJustNames {
 		for t := range timers.Records.Timers {
-			fmt.Println(t)
+			strs = append(strs, t)
 		}
 	} else {
 		for _, t := range timers.Records.Timers {
@@ -38,8 +41,12 @@ func timersSimple() error {
 				duration += " - running"
 			}
 
-			fmt.Printf("    %s: %s\n", t.Name, duration)
+			strs = append(strs, fmt.Sprintf("    %s: %s", t.Name, duration))
 		}
+	}
+	sort.Strings(strs)
+	for _, s := range strs {
+		fmt.Println(s)
 	}
 	return nil
 }

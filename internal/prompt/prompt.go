@@ -110,8 +110,8 @@ func ConfirmAll(confirmations []Confirmation) (err error) {
 	for _, c := range confirmations {
 		if result, err := Confirm(c); err != nil {
 			return err
-		} else {
-			return c.Value.Set(result)
+		} else if err = c.Value.Set(result); err != nil {
+			return err
 		}
 	}
 	return nil

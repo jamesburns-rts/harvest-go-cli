@@ -28,7 +28,7 @@ import (
 
 var entriesUpdateProject projectArg
 var entriesUpdateTask taskArg
-var entriesUpdateHours hoursArg
+var entriesUpdateDuration hoursArg
 var entriesUpdateNotes stringArg
 var entriesUpdateDate dateArg
 var entriesUpdateAppendNotes bool
@@ -66,8 +66,8 @@ or selection (if none provided)`,
 		// append
 		if entriesUpdateAppendHours {
 			h := op.Entry.Hours
-			h += *entriesUpdateHours.hours
-			entriesUpdateHours.SetHours(&h)
+			h += *entriesUpdateDuration.hours
+			entriesUpdateDuration.SetHours(&h)
 		}
 		if entriesUpdateAppendNotes {
 			entriesUpdateNotes.str = fmt.Sprintf("%s\n%s", op.Entry.Notes, entriesUpdateNotes.str)
@@ -87,7 +87,7 @@ or selection (if none provided)`,
 			op.ProjectId = entriesUpdateProject.projectId
 		}
 
-		op.Hours = entriesUpdateHours.hours
+		op.Hours = entriesUpdateDuration.hours
 		op.Date = entriesUpdateDate.date
 		if entriesUpdateNotes.str != "" || entriesUpdateClearNotes {
 			op.Notes = &entriesUpdateNotes.str
@@ -110,7 +110,7 @@ func init() {
 	entriesCmd.AddCommand(entriesUpdateCmd)
 	entriesUpdateCmd.Flags().VarP(&entriesUpdateProject, "project", "p", "Project to move entry to")
 	entriesUpdateCmd.Flags().VarP(&entriesUpdateTask, "task", "t", "Task to move entry to")
-	entriesUpdateCmd.Flags().VarP(&entriesUpdateHours, "hours", "H", "Duration to update entry's to (or append)")
+	entriesUpdateCmd.Flags().VarP(&entriesUpdateDuration, "duration", "D", "Duration to update entry's to (or append)")
 	entriesUpdateCmd.Flags().VarP(&entriesUpdateNotes, "message", "m", "Message to update entry's to (or append)")
 	entriesUpdateCmd.Flags().VarP(&entriesUpdateDate, "date", "d", "Date to update entry's to (see root's DATES section)")
 	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateAppendNotes, "append-notes", false, "Append notes instead of replacing")
@@ -129,8 +129,8 @@ func entriesUpdateConfirmEntry(entry harvest.Entry) error {
 	if entriesUpdateProject.str == "" {
 		entriesUpdateProject.SetId(&entry.Project.ID)
 	}
-	if entriesUpdateHours.str == "" {
-		entriesUpdateHours.SetHours(&entry.Hours)
+	if entriesUpdateDuration.str == "" {
+		entriesUpdateDuration.SetHours(&entry.Hours)
 	}
 	if entriesUpdateNotes.str == "" && !entriesUpdateClearNotes {
 		entriesUpdateNotes.str = entry.Notes
@@ -142,7 +142,7 @@ func entriesUpdateConfirmEntry(entry harvest.Entry) error {
 	fields := []prompt.Confirmation{
 		{"Project", &entriesUpdateProject},
 		{"Task", &entriesUpdateTask},
-		{"Hours", &entriesUpdateHours},
+		{"Duration", &entriesUpdateDuration},
 		{"Notes", &entriesUpdateNotes},
 		{"Date", &entriesUpdateDate},
 	}

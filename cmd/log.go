@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -14,9 +15,7 @@ var logProject projectArg
 var logNotes stringArg
 var logDate dateArg
 var logDuration hoursArg
-// todo confirm flag
-// todo better output
-// Todo move to becoded/go-harvest
+var logConfirm bool
 
 var logCmd = &cobra.Command{
 	Use:   "log [TASK [DURATION]]",
@@ -70,18 +69,19 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 			}
 		}
 
-		// prompt for duration if still not there
-		if logDuration.hours == nil {
-			if err = logDuration.prompt("Duration"); err != nil {
-				return err
-			}
+		// prompt for missing arguments
+		var confirms []prompt.Confirmation
+		if logDuration.hours == nil || logConfirm {
+			confirms = append(confirms, prompt.Confirmation{Title: "Duration", Value: &logDuration})
 		}
-
-		// get message
-		if logNotes.str == "" {
-			if err = logNotes.prompt("Notes"); err != nil {
-				return err
-			}
+		if logNotes.str == "" || logConfirm {
+			confirms = append(confirms, prompt.Confirmation{Title: "Notes", Value: &logNotes})
+		}
+		if logConfirm {
+			confirms = append(confirms, prompt.Confirmation{Title: "Date", Value: &logDate})
+		}
+		if err = prompt.ConfirmAll(confirms); err != nil {
+			return err
 		}
 
 		// log time
@@ -113,7 +113,7 @@ func entryOutputRows(entry harvest.Entry) [][]string {
 		{"Task", entry.Task.Name},
 		{"Notes", entry.Notes},
 		{"Date", entry.Date},
-		{"Hours", fmtHours(&entry.Hours)},
+		{"Duration", fmtHours(&entry.Hours)},
 	}
 }
 
@@ -140,4 +140,5 @@ func init() {
 	logCmd.Flags().VarP(&logNotes, "notes", "n", "Add notes to the time entry")
 	logCmd.Flags().VarP(&logDate, "date", "d", "Set the date for the entry")
 	logCmd.Flags().VarP(&logDuration, "duration", "D", "Set the duration for the entry")
+	logCmd.Flags().BoolVarP(&logConfirm, "confirm", "c", false, "Confirm all the values before logging")
 }
