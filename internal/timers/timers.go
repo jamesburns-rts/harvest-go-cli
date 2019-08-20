@@ -8,6 +8,7 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"log"
+	"math"
 	"time"
 )
 
@@ -144,18 +145,22 @@ func (t *Timer) Stop(preventSync bool, ctx context.Context) (err error) {
 
 	if t.SyncedEntryId != nil {
 		var entry harvest.Entry
-		if entry, err = harvest.GetEntry(*t.SyncedEntryId, ctx); err != nil {
+		if entry, err = harvest.StopTimerEntry(*t.SyncedEntryId, ctx); err != nil {
 			return err
 		}
 
 		t.compareNotes(entry.Notes)
 
 		// out of sync
-		_, err := harvest.UpdateEntry(harvest.EntryUpdateOptions{
-			Entry: entry,
-			Hours: &t.Duration,
-		}, ctx)
-		return err
+		if math.Abs(float64(entry.Hours-t.Duration)) > 0.1 {
+			_, err := harvest.UpdateEntry(harvest.EntryUpdateOptions{
+				Entry: entry,
+				Hours: &t.Duration,
+			}, ctx)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	SetTimer(*t)
 	return nil

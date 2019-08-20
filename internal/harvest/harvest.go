@@ -311,6 +311,20 @@ func StartTimerEntry(o TimerStartOptions, ctx context.Context) (Entry, error) {
 	return convertEntry(*entry), nil
 }
 
+func StopTimerEntry(entryId int64, ctx context.Context) (Entry, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "creating client")
+	}
+
+	entry, _, err := client.Timesheet.StopTimeEntry(ctx, entryId)
+	if err != nil {
+		return Entry{}, errors.Wrap(err, "stopping time entry")
+	}
+
+	return convertEntry(*entry), nil
+}
+
 func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {

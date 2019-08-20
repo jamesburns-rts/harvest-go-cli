@@ -21,33 +21,66 @@ import (
 	"context"
 	"fmt"
 	"github.com/antchfx/htmlquery"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/html"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
 
-// settable values
+var upgradeDownloadOnly string
 
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade harvest cli",
-	Long:  `TODO - longer description`,
+	Long:  `Download and install the latest binary`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 		link, err := getDownloadLink(ctx)
 		if err != nil {
 			return err
 		}
-		return downloadFile(link, ctx)
+
+		if upgradeDownloadOnly != "" {
+			f, err := os.OpenFile(upgradeDownloadOnly, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+			if err != nil {
+				return errors.Wrap(err, "opening new file")
+			}
+			return downloadFile(link, f, ctx)
+
+		} else {
+			newBinary, err := util.TempFile("new-harvest-binary", 0777)
+			if err != nil {
+				return errors.Wrap(err, "cannot create new file")
+			}
+
+			err = downloadFile(link, newBinary, ctx)
+			if err != nil {
+				return errors.Wrap(err, "downloading new file")
+			}
+
+			orig, err := filepath.Abs(os.Args[0])
+			if err != nil {
+				return errors.Wrap(err, "something is wrong")
+			}
+
+			execute, script, err := writeScript(orig, newBinary.Name())
+			if err != nil {
+				return errors.Wrap(err, "writing script")
+			}
+			c := exec.Command(execute, script)
+			return c.Start()
+		}
 	}),
 }
 
-func downloadFile(link string, ctx context.Context) error {
+func downloadFile(link string, destination *os.File, ctx context.Context) error {
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
 		return errors.Wrap(err, "creating latest version request")
@@ -63,59 +96,58 @@ func downloadFile(link string, ctx context.Context) error {
 	buff := bytes.Buffer{}
 	size, err := io.Copy(&buff, res.Body)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "copying to buffer")
 	}
 
 	reader, err := zip.NewReader(bytes.NewReader(buff.Bytes()), size)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "extracting zip")
 	}
 
 	if len(reader.File) != 1 {
 		return errors.New("unexpected number of files in zip")
 	}
 
-	newFileName := "new_harvest_cli"
-	newBinary, err := os.OpenFile(newFileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
-	if err != nil {
-		return errors.Wrap(err, "cannot create new file")
-	}
 	newBinaryData, err := reader.File[0].Open()
 	if err != nil {
 		return errors.Wrap(err, "can't open downloaded file")
 	}
-	if _, err := io.Copy(newBinary, newBinaryData); err != nil {
-		return errors.Wrap(err, "can't write to current binary")
+
+	if _, err := io.Copy(destination, newBinaryData); err != nil {
+		return errors.Wrap(err, "can't write to new binary")
 	}
 
-	orig, err := filepath.Abs(os.Args[0])
+	return destination.Close()
+}
+
+func writeScript(oldBinary, newBinary string) (execute, script string, err error) {
+	f, err := ioutil.TempFile(os.TempDir(), "harvest-go-cli-upgrade")
 	if err != nil {
-		return errors.Wrap(err, "something is wrong")
+		return
 	}
 
-	newFileName, err = filepath.Abs(newFileName)
-	if err != nil {
-		return errors.Wrap(err, "something is wrong")
+	var commands []string
+	if runtime.GOOS == "windows" {
+		return "", "", errors.New("windows upgrade not yet supported. Use --download-only")
+
+	} else {
+		execute = "sh"
+		commands = []string{
+			"#!/bin/bash",
+			fmt.Sprintf("wait %d", os.Getpid()),
+			fmt.Sprintf("cp %s %s", newBinary, oldBinary),
+			fmt.Sprintf("rm %s", newBinary),
+			`rm -- "$0"`,
+		}
 	}
-	fmt.Printf("cp %s %s && rm %s\n", newFileName, orig, newFileName)
 
-	//binary, err := os.OpenFile(os.Args[0], os.O_RDWR, 0)
-	//if err != nil {
-	//	return errors.Wrap(err, "can't open current binary")
-	//}
-	//newBinary, err := reader.File[0].Open()
-	//if err != nil {
-	//	return errors.Wrap(err, "can't open downloaded file")
-	//}
-	//if _, err := io.Copy(binary, newBinary); err != nil {
-	//	return errors.Wrap(err, "can't write to current binary")
-	//}
+	if _, err = f.WriteString(strings.Join(commands, "\n")); err != nil {
+		return
+	}
+	script = f.Name()
+	err = f.Close()
+	return
 
-	// write to file
-	// cp newFile oldFile
-	// rm newFile
-
-	return nil
 }
 
 func getDownloadLink(ctx context.Context) (string, error) {
@@ -165,4 +197,6 @@ func getDownloadLink(ctx context.Context) (string, error) {
 
 func init() {
 	rootCmd.AddCommand(upgradeCmd)
+	upgradeCmd.Flags().StringVar(&upgradeDownloadOnly, "download-only", "",
+		"Just download the new binary in the current directory with the given name")
 }

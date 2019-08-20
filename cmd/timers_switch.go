@@ -44,9 +44,9 @@ var timersSwitchCmd = &cobra.Command{
 
 func init() {
 	timersCmd.AddCommand(timersSwitchCmd)
-	timersSwitchCmd.Flags().VarP(&timersStartTask, "task", "t",
+	timersSwitchCmd.Flags().VarP(&timersSwitchTask, "task", "t",
 		"Associate timer with a task and sync the timer with harvest")
-	timersSwitchCmd.Flags().Int64VarP(&timersStartEntryId, "entry", "e", -1,
+	timersSwitchCmd.Flags().Int64VarP(&timersSwitchEntryId, "entry", "e", -1,
 		"Associate timer with a time entry and sync the timer with harvest")
-	timersSwitchCmd.Flags().StringVarP(&timersStartNotes, "notes", "n", "", "Append notes to the timer")
+	timersSwitchCmd.Flags().StringVarP(&timersSwitchNotes, "notes", "n", "", "Append notes to the timer")
 }
