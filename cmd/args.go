@@ -5,6 +5,7 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
+	"github.com/pkg/errors"
 	"strconv"
 	"time"
 )
@@ -38,6 +39,9 @@ func (t *taskArg) String() string {
 }
 
 func (t *taskArg) Set(str string) (err error) {
+	if str == "" {
+		return errors.New("cannot be empty")
+	}
 	t.str = str
 	t.taskId, t.projectId, err = harvest.ParseTaskId(str)
 	return err
@@ -64,6 +68,9 @@ func (p *projectArg) String() string {
 }
 
 func (p *projectArg) Set(str string) error {
+	if str == "" {
+		return errors.New("cannot be empty")
+	}
 	if projectId, err := harvest.ParseProjectId(str); err != nil {
 		return err
 	} else {
@@ -91,6 +98,9 @@ func (h *hoursArg) String() string {
 }
 
 func (h *hoursArg) Set(str string) (err error) {
+	if str == "" {
+		return errors.New("cannot be empty")
+	}
 	h.str = str
 	h.hours, err = ParseHours(str)
 	return err
@@ -145,6 +155,9 @@ func (d *dateArg) String() string {
 }
 
 func (d *dateArg) Set(str string) (err error) {
+	if str == "" {
+		return errors.New("cannot be empty")
+	}
 	d.str = str
 	d.date, err = util.StringToDate(str)
 	return err

@@ -6,6 +6,7 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +17,7 @@ var logNotes stringArg
 var logDate dateArg
 var logDuration hoursArg
 var logConfirm bool
+var logTimer string
 
 var logCmd = &cobra.Command{
 	Use:   "log [TASK [DURATION]]",
@@ -34,6 +36,28 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 		if len(args) > 1 {
 			if err = logDuration.Set(args[1]); err != nil {
 				return errors.Wrap(err, "for [DURATION]")
+			}
+		}
+
+		if logTimer != "" {
+			if timer, ok := timers.Records.Timers[logTimer]; !ok {
+				return errors.Errorf("timer %s does not exist", logTimer)
+			} else {
+				if logTask.taskId == nil {
+					logTask.SetId(timer.SyncedTaskId, timer.SyncedProjectId)
+				}
+				if logDuration.hours == nil {
+					logDuration.SetHours(timer.RunningHours())
+				}
+				if logNotes.str == "" {
+					logNotes.str = timer.Notes
+				}
+				defer func() {
+					if err == nil {
+						delete(timers.Records.Timers, timer.Name)
+						err = writeConfig()
+					}
+				}()
 			}
 		}
 
@@ -141,4 +165,5 @@ func init() {
 	logCmd.Flags().VarP(&logDate, "date", "d", "Set the date for the entry")
 	logCmd.Flags().VarP(&logDuration, "duration", "D", "Set the duration for the entry")
 	logCmd.Flags().BoolVarP(&logConfirm, "confirm", "c", false, "Confirm all the values before logging")
+	logCmd.Flags().StringVarP(&logTimer, "timer", "T", "", "Get data from timer while creating record")
 }
