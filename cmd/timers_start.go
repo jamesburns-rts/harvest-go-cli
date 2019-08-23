@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/spf13/cobra"
 	"time"
 )
@@ -12,6 +13,7 @@ import (
 var timersStartTask taskArg
 var timersStartEntryId int64
 var timersStartNotes string
+var timersStartHours hoursArg
 
 var timersStartCmd = &cobra.Command{
 	Use:   "start NAME",
@@ -19,11 +21,11 @@ var timersStartCmd = &cobra.Command{
 	Short: "Start a timer",
 	Long:  `Start a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		return timersStart(args[0], timersStartNotes, timersStartTask, timersStartEntryId, ctx)
+		return timersStart(args[0], timersStartNotes, timersStartTask, timersStartEntryId, timersStartHours, ctx)
 	}),
 }
 
-func timersStart(name, notes string, task taskArg, entryId int64, ctx context.Context) error {
+func timersStart(name, notes string, task taskArg, entryId int64, hours hoursArg, ctx context.Context) error {
 	var t timers.Timer
 	var exists bool
 	if t, exists = timers.Records.Timers[name]; !exists {
@@ -48,6 +50,10 @@ func timersStart(name, notes string, task taskArg, entryId int64, ctx context.Co
 		t.SyncedEntryId = &entryId
 	}
 
+	if hours.hours != nil {
+		t.Duration += *hours.hours
+	}
+
 	if err := t.Start(timersDoNotSync, ctx); err != nil {
 		return err
 	}
@@ -55,8 +61,8 @@ func timersStart(name, notes string, task taskArg, entryId int64, ctx context.Co
 	timers.SetTimer(t)
 
 	_ = printWithFormat(outputMap{
-		config.OutputFormatSimple: func() error { return timersStartSimple(exists, t) },
-		config.OutputFormatTable:  func() error { return timersStartSimple(exists, t) },
+		config.OutputFormatSimple: func() error { return timersStartSimple(t) },
+		config.OutputFormatTable:  func() error { return timersStartSimple(t) },
 		config.OutputFormatJson: func() error {
 			t.Duration = *t.RunningHours()
 			return outputJson(t)
@@ -66,9 +72,9 @@ func timersStart(name, notes string, task taskArg, entryId int64, ctx context.Co
 	return writeConfig()
 }
 
-func timersStartSimple(exists bool, t timers.Timer) error {
+func timersStartSimple(t timers.Timer) error {
 	resumedStr := "started"
-	if exists {
+	if t.Duration > types.Hours(0) {
 		resumedStr = fmt.Sprintf("resumed from %s", fmtHours(&t.Duration))
 	}
 	fmt.Printf("Timer %s %s at %s\n", t.Name, resumedStr, t.StartedTime().Format(time.Kitchen))
@@ -82,4 +88,6 @@ func init() {
 	timersStartCmd.Flags().Int64VarP(&timersStartEntryId, "entry", "e", -1,
 		"Associate timer with a time entry and sync the timer with harvest")
 	timersStartCmd.Flags().StringVarP(&timersStartNotes, "notes", "n", "", "Append notes to the timer")
+	timersStartCmd.Flags().VarP(&timersStartHours, "hours", "H",
+		"Start the timer with the given hours already clocked (or appended)")
 }

@@ -9,6 +9,7 @@ import (
 var timersSwitchTask taskArg
 var timersSwitchEntryId int64
 var timersSwitchNotes string
+var timersSwitchHours hoursArg
 
 var timersSwitchCmd = &cobra.Command{
 	Use:   "switch NAME",
@@ -25,7 +26,7 @@ var timersSwitchCmd = &cobra.Command{
 		// stop all other timers
 		for _, t := range timers.Records.Timers {
 			if t.Running && t.Name != name {
-				if err := timersStop(t.Name, ctx); err != nil {
+				if err := timersStop(t.Name, hoursArg{}, ctx); err != nil {
 					return err
 				}
 			}
@@ -33,9 +34,9 @@ var timersSwitchCmd = &cobra.Command{
 
 		if name != "" {
 			if existing, ok := timers.Records.Timers[name]; !ok || !existing.Running {
-				return timersStart(name, timersSwitchNotes, timersSwitchTask, timersSwitchEntryId, ctx)
+				return timersStart(name, timersSwitchNotes, timersSwitchTask, timersSwitchEntryId, timersSwitchHours, ctx)
 			} else {
-				return timersStop(name, ctx)
+				return timersStop(name, timersSwitchHours, ctx)
 			}
 		}
 		return nil
@@ -49,4 +50,6 @@ func init() {
 	timersSwitchCmd.Flags().Int64VarP(&timersSwitchEntryId, "entry", "e", -1,
 		"Associate timer with a time entry and sync the timer with harvest")
 	timersSwitchCmd.Flags().StringVarP(&timersSwitchNotes, "notes", "n", "", "Append notes to the timer")
+	timersSwitchCmd.Flags().VarP(&timersSwitchHours, "hours", "H",
+		"Start/stop the timer with the given hours appended")
 }

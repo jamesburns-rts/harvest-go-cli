@@ -9,23 +9,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var timersStopHours hoursArg
+
 var timersStopCmd = &cobra.Command{
 	Use:   "stop NAME",
 	Args:  cobra.ExactArgs(1),
 	Short: "Stop a timer",
 	Long:  `Stop a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		return timersStop(args[0], ctx)
+		return timersStop(args[0], timersStopHours, ctx)
 
 	}),
 }
 
-func timersStop(name string, ctx context.Context) error {
+func timersStop(name string, hours hoursArg, ctx context.Context) error {
 
 	if t, ok := timers.Records.Timers[name]; ok {
 		if err := t.Stop(timersDoNotSync, ctx); err != nil {
 			return err
 		}
+
+		if hours.hours != nil {
+			t.Duration += *hours.hours
+		}
+
 		_ = printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return timersStopSimple(t) },
 			config.OutputFormatTable:  func() error { return timersStopSimple(t) },
@@ -45,4 +52,5 @@ func timersStopSimple(t timers.Timer) error {
 
 func init() {
 	timersCmd.AddCommand(timersStopCmd)
+	timersStopCmd.Flags().VarP(&timersStopHours, "hours", "H", "Stop the timer with the given hours appended")
 }
