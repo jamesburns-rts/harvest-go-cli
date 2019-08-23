@@ -35,7 +35,7 @@ var Records TrackingRecords
 func Set(t Timer) {
 	for i, v := range Records.Timers {
 		if v.Name == t.Name {
-			Records.Timers[i] = v
+			Records.Timers[i] = t
 			return
 		}
 	}

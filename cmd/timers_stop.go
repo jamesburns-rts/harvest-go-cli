@@ -38,11 +38,11 @@ func timersStop(name string, hours hoursArg, ctx context.Context) error {
 			config.OutputFormatTable:  func() error { return timersStopSimple(t) },
 			config.OutputFormatJson:   func() error { return outputJson(t) },
 		})
+
+		return writeConfig()
 	} else {
 		return errors.New("no timer exists")
 	}
-
-	return writeConfig()
 }
 
 func timersStopSimple(t timers.Timer) error {
