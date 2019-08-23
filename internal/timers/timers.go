@@ -25,18 +25,39 @@ type (
 	}
 
 	TrackingRecords struct {
-		Arrived string           `yaml,json:"arrived"`
-		Timers  map[string]Timer `yaml,json:"timers"`
+		Arrived string  `yaml,json:"arrived"`
+		Timers  []Timer `yaml,json:"timers"`
 	}
 )
 
 var Records TrackingRecords
 
-func SetTimer(t Timer) {
-	if Records.Timers == nil {
-		Records.Timers = make(map[string]Timer)
+func Set(t Timer) {
+	for i, v := range Records.Timers {
+		if v.Name == t.Name {
+			Records.Timers[i] = v
+			return
+		}
 	}
-	Records.Timers[t.Name] = t
+	Records.Timers = append(Records.Timers, t)
+}
+
+func Get(name string) (Timer, bool) {
+	for _, v := range Records.Timers {
+		if v.Name == name {
+			return v, true
+		}
+	}
+	return Timer{}, false
+}
+
+func Delete(name string) {
+	for i, t := range Records.Timers {
+		if t.Name == name {
+			Records.Timers = append(Records.Timers[:i], Records.Timers[i+1:]...)
+			return
+		}
+	}
 }
 
 func (r *TrackingRecords) SetArrived(t time.Time) {
@@ -132,7 +153,7 @@ func (t *Timer) Start(preventSync bool, ctx context.Context) (err error) {
 			t.SyncedEntryId = &entry.ID
 		}
 	}
-	SetTimer(*t)
+	Set(*t)
 	return nil
 }
 
@@ -162,7 +183,7 @@ func (t *Timer) Stop(preventSync bool, ctx context.Context) (err error) {
 			}
 		}
 	}
-	SetTimer(*t)
+	Set(*t)
 	return nil
 }
 

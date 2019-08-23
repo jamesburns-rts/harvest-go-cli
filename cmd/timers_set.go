@@ -23,7 +23,7 @@ var timersSetCmd = &cobra.Command{
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		name := args[0]
-		if timer, ok := timers.Records.Timers[name]; ok {
+		if timer, ok := timers.Get(name); ok {
 			timer.Notes += timersSetNotes
 
 			if timersSetHours.hours != nil {
@@ -35,7 +35,7 @@ var timersSetCmd = &cobra.Command{
 				timer.Duration += *timersSetAdd.hours
 			}
 
-			timers.SetTimer(timer)
+			timers.Set(timer)
 
 			_ = printWithFormat(outputMap{
 				config.OutputFormatSimple: func() error { return timersSetSimple(timer) },

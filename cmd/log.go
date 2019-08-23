@@ -40,7 +40,7 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 		}
 
 		if logTimer != "" {
-			if timer, ok := timers.Records.Timers[logTimer]; !ok {
+			if timer, ok := timers.Get(logTimer); !ok {
 				return errors.Errorf("timer %s does not exist", logTimer)
 			} else {
 				if logTask.taskId == nil {
@@ -54,7 +54,7 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 				}
 				defer func() {
 					if err == nil {
-						delete(timers.Records.Timers, timer.Name)
+						timers.Delete(timer.Name)
 						err = writeConfig()
 					}
 				}()
@@ -83,7 +83,7 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 		}
 
 		// get defaults
-		if alias, ok := config.Harvest.TaskAliases[logTask.str]; ok {
+		if alias, ok := config.GetTaskAlias(logTask.str); ok {
 
 			if logDuration.hours == nil {
 				logDuration.hours = alias.DefaultDuration

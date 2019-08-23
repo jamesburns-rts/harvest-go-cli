@@ -104,7 +104,7 @@ func ParseProjectId(str string) (*int64, error) {
 		return nil, nil
 	}
 
-	if projectAlias, ok := config.Harvest.ProjectAliases[str]; ok {
+	if projectAlias, ok := config.GetProjectAlias(str); ok {
 		return &projectAlias.ProjectId, nil
 	}
 
@@ -120,7 +120,7 @@ func ParseTaskId(str string) (taskId, projectId *int64, err error) {
 		return nil, nil, nil
 	}
 
-	if taskAlias, ok := config.Harvest.TaskAliases[str]; ok {
+	if taskAlias, ok := config.GetTaskAlias(str); ok {
 		return &taskAlias.TaskId, &taskAlias.ProjectId, nil
 	}
 

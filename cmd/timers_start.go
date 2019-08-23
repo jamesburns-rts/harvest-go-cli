@@ -28,7 +28,7 @@ var timersStartCmd = &cobra.Command{
 func timersStart(name, notes string, task taskArg, entryId int64, hours hoursArg, ctx context.Context) error {
 	var t timers.Timer
 	var exists bool
-	if t, exists = timers.Records.Timers[name]; !exists {
+	if t, exists = timers.Get(name); !exists {
 		t = timers.Timer{
 			Name:  name,
 			Notes: notes,
@@ -58,7 +58,7 @@ func timersStart(name, notes string, task taskArg, entryId int64, hours hoursArg
 		return err
 	}
 
-	timers.SetTimer(t)
+	timers.Set(t)
 
 	_ = printWithFormat(outputMap{
 		config.OutputFormatSimple: func() error { return timersStartSimple(t) },

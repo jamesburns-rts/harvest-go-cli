@@ -15,8 +15,9 @@ var timersDeleteCmd = &cobra.Command{
 	Short: "Delete a timer",
 	Long:  `Delete a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		if t, ok := timers.Records.Timers[args[0]]; ok {
-			delete(timers.Records.Timers, args[0])
+		name := args[0]
+		if t, ok := timers.Get(name); ok {
+			timers.Delete(name)
 			_ = printWithFormat(outputMap{
 				config.OutputFormatSimple: func() error { return timersDeleteSimple(t) },
 				config.OutputFormatTable:  func() error { return timersDeleteSimple(t) },

@@ -41,7 +41,7 @@ var rootVersion bool
 type rootSummary struct {
 	harvest.MonthSummary
 	WorkedTodayHours *Hours
-	Timers           map[string]timers.Timer
+	Timers           []timers.Timer
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -236,11 +236,14 @@ func initConfig() {
 	timers.Records = conf.Timers
 
 	// clear old timers
-	for k, v := range timers.Records.Timers {
+	for _, v := range timers.Records.Timers {
 		if !util.SameDay(v.StartedTime(), time.Now()) {
-			delete(timers.Records.Timers, k)
+			timers.Delete(v.Name)
 		}
 	}
+
+	// todo remove in a while
+	config.MigrateAliases()
 }
 
 type viperConfig struct {

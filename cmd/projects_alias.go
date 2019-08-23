@@ -82,7 +82,7 @@ var timeProjectsAliasDeleteCmd = &cobra.Command{
 				return err
 			}
 		}
-		delete(config.Harvest.ProjectAliases, alias)
+		config.DeleteProjectAlias(alias)
 
 		return writeConfig()
 	}),

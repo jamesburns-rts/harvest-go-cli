@@ -199,8 +199,8 @@ func selectTask(projectId int64, ctx context.Context) (taskId *int64, err error)
 
 func selectProjectAlias() (alias string, err error) {
 	var aliases []string
-	for k := range config.Harvest.ProjectAliases {
-		aliases = append(aliases, k)
+	for _, p := range config.Harvest.Projects {
+		aliases = append(aliases, p.Name)
 	}
 	if selection, err := prompt.ForSelection("Alias", aliases); err != nil {
 		return "", err
@@ -211,8 +211,8 @@ func selectProjectAlias() (alias string, err error) {
 
 func selectTaskAlias() (alias string, err error) {
 	var aliases []string
-	for k := range config.Harvest.TaskAliases {
-		aliases = append(aliases, k)
+	for _, t := range config.Harvest.Tasks {
+		aliases = append(aliases, t.Name)
 	}
 	if selection, err := prompt.ForSelection("Alias", aliases); err != nil {
 		return "", err

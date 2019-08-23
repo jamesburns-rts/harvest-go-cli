@@ -29,7 +29,7 @@ var tasksAliasesCmd = &cobra.Command{
 	Long:  `List task aliases`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
-		aliases := config.Harvest.TaskAliases
+		aliases := config.Harvest.Tasks
 
 		return printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return tasksAliasesOutputSimple(aliases) },
@@ -39,18 +39,18 @@ var tasksAliasesCmd = &cobra.Command{
 	}),
 }
 
-func tasksAliasesOutputSimple(aliases map[string]config.TaskAlias) error {
-	for k := range aliases {
-		fmt.Println(k)
+func tasksAliasesOutputSimple(aliases []config.TaskAlias) error {
+	for _, t := range aliases {
+		fmt.Println(t.Name)
 	}
-
 	return nil
 }
-func tasksAliasesOutputTable(aliases map[string]config.TaskAlias) error {
+
+func tasksAliasesOutputTable(aliases []config.TaskAlias) error {
 	table := createTable([]string{"Alias", "ProjectId", "TaskId"})
-	for k, v := range aliases {
+	for _, v := range aliases {
 		table.Append([]string{
-			k,
+			v.Name,
 			strconv.Itoa(int(v.ProjectId)),
 			strconv.Itoa(int(v.TaskId)),
 		})

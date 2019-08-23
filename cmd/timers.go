@@ -30,8 +30,8 @@ func timersSimple() error {
 
 	var strs []string
 	if timersJustNames {
-		for t := range timers.Records.Timers {
-			strs = append(strs, t)
+		for _, t := range timers.Records.Timers {
+			strs = append(strs, t.Name)
 		}
 	} else {
 		for _, t := range timers.Records.Timers {
@@ -54,8 +54,8 @@ func timersSimple() error {
 func timersTable() error {
 	if timersJustNames {
 		table := createTable([]string{"Name"})
-		for t := range timers.Records.Timers {
-			table.Append([]string{t})
+		for _, t := range timers.Records.Timers {
+			table.Append([]string{t.Name})
 		}
 		table.Render()
 	} else {
@@ -76,8 +76,8 @@ func timersTable() error {
 func timersJson() error {
 	if timersJustNames {
 		var names []string
-		for t := range timers.Records.Timers {
-			names = append(names, t)
+		for _, t := range timers.Records.Timers {
+			names = append(names, t.Name)
 		}
 		return outputJson(names)
 	} else {

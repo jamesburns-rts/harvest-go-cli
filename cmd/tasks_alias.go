@@ -53,7 +53,7 @@ var tasksAliasCmd = &cobra.Command{
 		var defaultDuration *Hours
 
 		// check for existing
-		if taskAlias, ok := config.Harvest.TaskAliases[alias]; ok {
+		if taskAlias, ok := config.GetTaskAlias(alias); ok {
 			projectId = &taskAlias.ProjectId
 			taskId = &taskAlias.TaskId
 			defaultNotes = taskAlias.DefaultNotes
@@ -130,8 +130,7 @@ var timeTasksAliasDeleteCmd = &cobra.Command{
 				return err
 			}
 		}
-		delete(config.Harvest.TaskAliases, alias)
-
+		config.DeleteTaskAlias(alias)
 		return writeConfig()
 	}),
 }

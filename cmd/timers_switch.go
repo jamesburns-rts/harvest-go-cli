@@ -33,7 +33,7 @@ var timersSwitchCmd = &cobra.Command{
 		}
 
 		if name != "" {
-			if existing, ok := timers.Records.Timers[name]; !ok || !existing.Running {
+			if existing, ok := timers.Get(name); !ok || !existing.Running {
 				return timersStart(name, timersSwitchNotes, timersSwitchTask, timersSwitchEntryId, timersSwitchHours, ctx)
 			} else {
 				return timersStop(name, timersSwitchHours, ctx)

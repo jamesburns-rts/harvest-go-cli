@@ -24,7 +24,7 @@ var timersStopCmd = &cobra.Command{
 
 func timersStop(name string, hours hoursArg, ctx context.Context) error {
 
-	if t, ok := timers.Records.Timers[name]; ok {
+	if t, ok := timers.Get(name); ok {
 		if err := t.Stop(timersDoNotSync, ctx); err != nil {
 			return err
 		}
