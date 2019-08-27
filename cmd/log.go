@@ -163,7 +163,7 @@ func init() {
 	logCmd.Flags().VarP(&logTask, "task", "t", "Set the task (see root's ALIASES section)")
 	logCmd.Flags().VarP(&logNotes, "notes", "n", "Add notes to the time entry")
 	logCmd.Flags().VarP(&logDate, "date", "d", "Set the date for the entry")
-	logCmd.Flags().VarP(&logDuration, "duration", "D", "Set the duration for the entry")
+	logCmd.Flags().VarP(&logDuration, "hours", "H", "Set the duration for the entry")
 	logCmd.Flags().BoolVarP(&logConfirm, "confirm", "c", false, "Confirm all the values before logging")
 	logCmd.Flags().StringVarP(&logTimer, "timer", "T", "", "Get data from timer while creating record")
 }

@@ -35,8 +35,10 @@ func timersStart(name, notes string, task taskArg, entryId int64, hours hoursArg
 			//SyncedTaskId *int64 `yaml,json:"syncedTaskId"`
 		}
 		t.SetStarted(time.Now())
+	} else if t.Notes == "" {
+		t.Notes = notes
 	} else {
-		t.Notes += notes
+		t.Notes += "\n" + notes
 	}
 
 	if task.str != "" {

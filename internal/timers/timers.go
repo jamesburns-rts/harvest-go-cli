@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -134,6 +135,7 @@ func (t *Timer) Start(preventSync bool, ctx context.Context) (err error) {
 				_, err := harvest.UpdateEntry(harvest.EntryUpdateOptions{
 					Entry:   entry,
 					Started: &started,
+					Notes:   &t.Notes,
 				}, ctx)
 				return err
 			}
@@ -188,7 +190,13 @@ func (t *Timer) Stop(preventSync bool, ctx context.Context) (err error) {
 }
 
 func (t *Timer) compareNotes(entryNotes string) {
-
+	lines := strings.Split(t.Notes, "\n")
+	for _, line := range strings.Split(entryNotes, "\n") {
+		if _, ok := util.Contains(lines, line); !ok {
+			lines = append(lines, line)
+		}
+	}
+	t.Notes = strings.Join(lines, "\n")
 }
 
 func SumTimeOn(names []string) (total Hours) {

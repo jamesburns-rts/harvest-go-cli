@@ -12,7 +12,7 @@ import (
 var timersMoveHours hoursArg
 
 var timersMoveCmd = &cobra.Command{
-	Use:   "move ORIGIn DESTINATION",
+	Use:   "move ORIGIN DESTINATION",
 	Args:  cobra.ExactArgs(2),
 	Short: "Move a timer",
 	Long:  `Move a timer`,
@@ -33,13 +33,20 @@ var timersMoveCmd = &cobra.Command{
 				timers.Set(origin)
 				timers.Set(destination)
 
-				fmt.Printf("Moved %s of %s to %s\n", timersMoveHours.str, originName, destinationName)
 			} else {
+				var destination timers.Timer
+				if destination, ok = timers.Get(destinationName); !ok {
+					destination = origin
+					destination.Name = destinationName
+				} else {
+					destination.Duration += *origin.RunningHours()
+				}
+
 				timers.Delete(originName)
-				origin.Name = destinationName
-				timers.Set(origin)
-				fmt.Printf("Moved %s to %s\n", originName, destinationName)
+				timers.Set(destination)
 			}
+
+			fmt.Printf("Moved %s of %s to %s\n", timersMoveHours.str, originName, destinationName)
 		} else {
 			return errors.New("timer does not exist")
 		}

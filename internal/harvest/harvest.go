@@ -228,7 +228,7 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 
 		page, _, err := client.Timesheet.List(ctx, &options)
 		if err != nil {
-			log.Fatal(err)
+			return entries, err
 		}
 
 		for _, e := range page.TimeEntries {

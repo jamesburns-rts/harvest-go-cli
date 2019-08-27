@@ -141,6 +141,6 @@ func init() {
 
 	tasksAliasCmd.Flags().VarP(&tasksAliasProject, "project", "p", "project ID/alias the task is for")
 	tasksAliasCmd.Flags().Int64VarP(&tasksAliasTaskId, "task", "t", -1, "Task ID the task is for")
-	tasksAliasCmd.Flags().VarP(&tasksAliasNotes, "default-notes", "m", "Default notes to use when logging time")
-	tasksAliasCmd.Flags().VarP(&tasksAliasDuration, "default-duration", "d", "Default duration to use when logging time")
+	tasksAliasCmd.Flags().VarP(&tasksAliasNotes, "default-notes", "n", "Default notes to use when logging time")
+	tasksAliasCmd.Flags().VarP(&tasksAliasDuration, "default-hours", "H", "Default duration to use when logging time")
 }

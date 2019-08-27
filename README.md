@@ -10,6 +10,14 @@ CLI for everything Harvest
 harvest set --harvest-access-token <accessToken> --harvest-account-id <accountId>
 ```
 
+# Aliases
+To get started with a task alias, try something like:
+```sh
+harvest tasks alias standup -n 'Daily standup' -H 30m
+> chose project/task
+harvest log standup
+```
+
 # Updates
 You can install the latest version simply by running
 ```sh
@@ -27,7 +35,7 @@ harvest.exe upgrade --download-only harvest.exe
 * Alias project and task IDs - `harvest (projects|tasks) alias [ALIAS [ID]]` 
 * Updating entries
 * Timers (at least local)
+* Timers syncing with harvest - maybe
 
 # Features In Development
-* Timers syncing with harvest - maybe
 * Statistics like project weights

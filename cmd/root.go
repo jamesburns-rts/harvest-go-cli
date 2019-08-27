@@ -76,7 +76,7 @@ Inputs of date type can be a few formats:
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		if rootVersion {
-			fmt.Println("v0.9.5")
+			fmt.Println("v0.9.6")
 			return nil
 		}
 
@@ -84,8 +84,9 @@ Inputs of date type can be a few formats:
 		var workedTodayHours *Hours
 
 		// calculate monthly summary
-		if harvestSummary, err = harvest.CalculateMonthSummary(time.Now(), ctx); err != nil {
-			return errors.Wrap(err, "calculating summary")
+		harvestSummary, err = harvest.CalculateMonthSummary(time.Now(), ctx)
+		if err != nil && outputFormat != config.OutputFormatJson {
+			fmt.Println(errors.Wrap(err, "calculating summary"))
 		}
 
 		arrived := timers.Records.ArrivedTime()
