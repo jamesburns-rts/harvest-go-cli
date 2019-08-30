@@ -3,10 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 var timersMoveHours hoursArg
@@ -44,6 +45,7 @@ var timersMoveCmd = &cobra.Command{
 
 				timers.Delete(originName)
 				timers.Set(destination)
+				timersMoveHours.str = fmtHours(origin.RunningHours())
 			}
 
 			fmt.Printf("Moved %s of %s to %s\n", timersMoveHours.str, originName, destinationName)
