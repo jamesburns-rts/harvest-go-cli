@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/pkg/errors"
@@ -10,6 +11,7 @@ import (
 )
 
 var timersStopHours hoursArg
+var timersStopNotes string
 
 var timersStopCmd = &cobra.Command{
 	Use:   "stop NAME",
@@ -17,12 +19,12 @@ var timersStopCmd = &cobra.Command{
 	Short: "Stop a timer",
 	Long:  `Stop a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
-		return timersStop(args[0], timersStopHours, ctx)
+		return timersStop(args[0], timersStopHours, timersStopNotes, ctx)
 
 	}),
 }
 
-func timersStop(name string, hours hoursArg, ctx context.Context) error {
+func timersStop(name string, hours hoursArg, notesArg string, ctx context.Context) error {
 
 	if t, ok := timers.Get(name); ok {
 		if err := t.Stop(timersDoNotSync, ctx); err != nil {
@@ -32,6 +34,8 @@ func timersStop(name string, hours hoursArg, ctx context.Context) error {
 		if hours.hours != nil {
 			t.Duration += *hours.hours
 		}
+
+		t.AppendNotes(notesArg)
 
 		_ = printWithFormat(outputMap{
 			config.OutputFormatSimple: func() error { return timersStopSimple(t) },
@@ -53,4 +57,5 @@ func timersStopSimple(t timers.Timer) error {
 func init() {
 	timersCmd.AddCommand(timersStopCmd)
 	timersStopCmd.Flags().VarP(&timersStopHours, "hours", "H", "Stop the timer with the given hours appended")
+	timersStopCmd.Flags().StringVarP(&timersStopNotes, "notes", "n", "", "Append notes to the timer")
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/manifoldco/promptui/list"
 	"strings"
+	"sync"
 )
 
 type (
@@ -47,12 +48,13 @@ func ForSelection(title string, options interface{}) (int, error) {
 
 func getSelectionTemplate(title string, options interface{}) *promptui.SelectTemplates {
 
+	sync.Map{}
 	switch options.(type) {
 	case []harvest.Project:
 		return &promptui.SelectTemplates{
-			Active:   fmt.Sprintf("%s {{ .Name }}", promptui.IconSelect),
-			Inactive: "  {{ .Name | faint }}",
-			Selected: fmt.Sprintf("%s %s: {{ .Name }}", promptui.IconGood, title),
+			Active:   fmt.Sprintf("%s {{ .ClientName }}: {{ .Name }}", promptui.IconSelect),
+			Inactive: "  {{ .ClientName | faint }}: {{ .Name | faint }}",
+			Selected: fmt.Sprintf("%s %s: {{ .ClientName }}: {{ .Name }}", promptui.IconGood, title),
 		}
 	case []harvest.Task:
 		return &promptui.SelectTemplates{
@@ -130,6 +132,7 @@ func Confirm(c Confirmation) (string, error) {
 	}
 
 	result, err := prompt.Run()
+	result = strings.ReplaceAll(result, " \\ ", "\n")
 	result = strings.ReplaceAll(result, " \\", "\n")
 	return result, err
 }

@@ -13,10 +13,11 @@ import (
 var timersMoveHours hoursArg
 
 var timersMoveCmd = &cobra.Command{
-	Use:   "move ORIGIN DESTINATION",
-	Args:  cobra.ExactArgs(2),
-	Short: "Move a timer",
-	Long:  `Move a timer`,
+	Use:     "move ORIGIN DESTINATION",
+	Aliases: []string{"mv"},
+	Args:    cobra.ExactArgs(2),
+	Short:   "Move a timer",
+	Long:    `Move a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		originName, destinationName := args[0], args[1]

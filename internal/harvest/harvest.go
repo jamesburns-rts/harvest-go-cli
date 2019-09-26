@@ -2,6 +2,10 @@ package harvest
 
 import (
 	"context"
+	"log"
+	"strconv"
+	"time"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 
 	"github.com/becoded/go-harvest/harvest"
@@ -9,17 +13,15 @@ import (
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
-	"log"
-	"strconv"
-	"time"
 )
 
 type (
 	Project struct {
-		ID       int64  `json:"id"`
-		Name     string `json:"name"`
-		Billable bool   `json:"billable"`
-		Tasks    []Task `json:"tasks"`
+		ID         int64  `json:"id"`
+		Name       string `json:"name"`
+		ClientName string `json:"client"`
+		Billable   bool   `json:"billable"`
+		Tasks      []Task `json:"tasks"`
 	}
 
 	Task struct {
@@ -181,10 +183,11 @@ func GetProjects(ctx context.Context) (projects []Project, err error) {
 			}
 
 			projects = append(projects, Project{
-				ID:       *p.Project.Id,
-				Name:     *p.Project.Name,
-				Billable: p.Project.IsBillable != nil && *p.Project.IsBillable,
-				Tasks:    tasks,
+				ID:         *p.Project.Id,
+				Name:       *p.Project.Name,
+				ClientName: *p.Client.Name,
+				Billable:   p.Project.IsBillable != nil && *p.Project.IsBillable,
+				Tasks:      tasks,
 			})
 		}
 		lastPage = *page.TotalPages - 1

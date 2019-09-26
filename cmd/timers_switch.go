@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ var timersSwitchCmd = &cobra.Command{
 		// stop all other timers
 		for _, t := range timers.Records.Timers {
 			if t.Running && t.Name != name {
-				if err := timersStop(t.Name, hoursArg{}, ctx); err != nil {
+				if err := timersStop(t.Name, hoursArg{}, "", ctx); err != nil {
 					return err
 				}
 			}
@@ -36,7 +37,7 @@ var timersSwitchCmd = &cobra.Command{
 			if existing, ok := timers.Get(name); !ok || !existing.Running {
 				return timersStart(name, timersSwitchNotes, timersSwitchTask, timersSwitchEntryId, timersSwitchHours, ctx)
 			} else {
-				return timersStop(name, timersSwitchHours, ctx)
+				return timersStop(name, timersSwitchHours, timersSwitchNotes, ctx)
 			}
 		}
 		return nil

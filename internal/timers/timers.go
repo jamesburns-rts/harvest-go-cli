@@ -3,14 +3,15 @@ package timers
 import (
 	"context"
 	"fmt"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
-	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
-	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
-	"github.com/pkg/errors"
 	"log"
 	"math"
 	"strings"
 	"time"
+
+	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
+	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
+	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
+	"github.com/pkg/errors"
 )
 
 type (
@@ -197,6 +198,17 @@ func (t *Timer) compareNotes(entryNotes string) {
 		}
 	}
 	t.Notes = strings.Join(lines, "\n")
+}
+
+func (t *Timer) AppendNotes(notes string) {
+	if notes == "" {
+		return
+	}
+	if t.Notes == "" {
+		t.Notes = notes
+		return
+	}
+	t.Notes += "\n" + notes
 }
 
 func SumTimeOn(names []string) (total Hours) {

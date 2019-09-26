@@ -3,11 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 var timersStartTask taskArg
@@ -30,15 +31,10 @@ func timersStart(name, notes string, task taskArg, entryId int64, hours hoursArg
 	var exists bool
 	if t, exists = timers.Get(name); !exists {
 		t = timers.Timer{
-			Name:  name,
-			Notes: notes,
+			Name: name,
 			//SyncedTaskId *int64 `yaml,json:"syncedTaskId"`
 		}
 		t.SetStarted(time.Now())
-	} else if t.Notes == "" {
-		t.Notes = notes
-	} else {
-		t.Notes += "\n" + notes
 	}
 
 	if task.str != "" {
@@ -59,6 +55,8 @@ func timersStart(name, notes string, task taskArg, entryId int64, hours hoursArg
 	if err := t.Start(timersDoNotSync, ctx); err != nil {
 		return err
 	}
+
+	t.AppendNotes(notes)
 
 	timers.Set(t)
 
