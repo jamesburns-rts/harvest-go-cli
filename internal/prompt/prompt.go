@@ -8,7 +8,6 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/manifoldco/promptui/list"
 	"strings"
-	"sync"
 )
 
 type (
@@ -48,7 +47,6 @@ func ForSelection(title string, options interface{}) (int, error) {
 
 func getSelectionTemplate(title string, options interface{}) *promptui.SelectTemplates {
 
-	sync.Map{}
 	switch options.(type) {
 	case []harvest.Project:
 		return &promptui.SelectTemplates{
