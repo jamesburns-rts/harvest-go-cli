@@ -1,9 +1,14 @@
 package util
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -45,4 +50,36 @@ func TempFile(prefix string, perm os.FileMode) (f *os.File, err error) {
 		break
 	}
 	return
+}
+
+// isWSL tests if the binary is being run in Windows Subsystem for Linux
+func isWSL() bool {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		return false
+	}
+	data, err := ioutil.ReadFile("/proc/version")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Unable to read /proc/version.\n")
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(data)), "microsoft")
+}
+
+
+func OpenURL(url string) error {
+	var cmd string
+	var args []string
+
+	switch {
+	case "windows" == runtime.GOOS || isWSL():
+		cmd = "cmd.exe"
+		args = []string{"/c", "start"}
+		url = strings.Replace(url, "&", "^&", -1)
+	case "darwin" == runtime.GOOS:
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }

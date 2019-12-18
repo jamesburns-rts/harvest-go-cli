@@ -2,6 +2,7 @@ package harvest
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -356,6 +357,20 @@ func RestartTimeEntry(timeEntryId int64, ctx context.Context) (Entry, error) {
 	}
 
 	return convertEntry(*entry), nil
+}
+
+func SubmitWeekUrl(t time.Time, ctx context.Context) (string, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "creating client")
+	}
+
+	comp, _, err := client.Company.Get(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "getting company")
+	}
+
+	return fmt.Sprintf("%s/time/week/%d/%d/%d", *comp.BaseUri, t.Year(), t.Month(), t.Day()), nil
 }
 
 func convertEntry(e harvest.TimeEntry) Entry {
