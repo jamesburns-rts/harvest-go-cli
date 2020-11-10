@@ -2,12 +2,13 @@ package prompt
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 	"github.com/manifoldco/promptui/list"
-	"strings"
 )
 
 type (
@@ -76,7 +77,7 @@ func getSearcher(options interface{}) list.Searcher {
 	case []harvest.Project:
 		return func(input string, index int) bool {
 			project := options.([]harvest.Project)[index]
-			return fuzzy.Match(strings.ToLower(input), strings.ToLower(project.Name))
+			return fuzzy.Match(strings.ToLower(input), strings.ToLower(project.ClientName+" "+project.Name))
 		}
 	case []harvest.Task:
 		return func(input string, index int) bool {
