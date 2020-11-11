@@ -127,11 +127,14 @@ func ParseTaskId(str string) (taskId, projectId *int64, err error) {
 		return &taskAlias.TaskId, &taskAlias.ProjectId, nil
 	}
 
-	i, err := strconv.ParseInt(str, 10, 64)
-	if err != nil {
-		return nil, nil, errors.New("no alias found for " + str)
+	if i, err := strconv.ParseInt(str, 10, 64); err == nil {
+		return &i, nil, nil
 	}
-	return &i, nil, err
+
+	if projectId, err = ParseProjectId(str); err == nil {
+		return nil, projectId, nil
+	}
+	return nil, nil, errors.New("no alias found for " + str)
 }
 
 func GetProject(projectId int64, ctx context.Context) (Project, error) {

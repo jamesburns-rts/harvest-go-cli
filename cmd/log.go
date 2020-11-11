@@ -72,6 +72,10 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 					return err
 				}
 			}
+		} else if logTask.projectId != nil {
+			if logTask.taskId, err = selectTask(*logTask.projectId, ctx); err != nil {
+				return err
+			}
 		} else if logProject.projectId != nil {
 			if logTask.taskId, err = selectTask(*logProject.projectId, ctx); err != nil {
 				return err
