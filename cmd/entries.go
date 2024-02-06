@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,11 +40,17 @@ var entriesCmd = &cobra.Command{
 section of the root command.`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
+		userId, err := getAndSaveUserId(ctx)
+		if err != nil {
+			return err
+		}
+
 		options := harvest.EntryListOptions{
 			To:        entriesToDate.date,
 			From:      entriesFromDate.date,
 			TaskId:    entriesTask.taskId,
 			ProjectId: entriesTask.projectId,
+			UserId:    userId,
 		}
 
 		if entriesProject.projectId != nil {

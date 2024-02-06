@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -80,11 +80,16 @@ Inputs of date type can be a few formats:
 			return nil
 		}
 
+		userId, err := getAndSaveUserId(ctx)
+		if err != nil {
+			return err
+		}
+
 		var harvestSummary harvest.MonthSummary
 		var workedTodayHours *Hours
 
 		// calculate monthly summary
-		harvestSummary, err = harvest.CalculateMonthSummary(time.Now(), ctx)
+		harvestSummary, err = harvest.CalculateMonthSummary(time.Now(), userId, ctx)
 		if err != nil && outputFormat != config.OutputFormatJson {
 			fmt.Println(errors.Wrap(err, "calculating summary"))
 		}
@@ -122,17 +127,27 @@ Inputs of date type can be a few formats:
 
 func rootOutputSimple(s rootSummary) error {
 
+	var shortWeekMessage string
+	if s.ShortWeek >= 0 {
+		shortWeekMessage = fmt.Sprintf("You are %s short for today", fmtHours(&s.ShortWeek))
+	} else {
+		s.ShortWeek *= -1
+		shortWeekMessage = fmt.Sprintf("You are %s over for today", fmtHours(&s.ShortWeek))
+	}
+
 	var shortMessage string
 	if s.Short >= 0 {
-		shortMessage = fmt.Sprintf("You are %s short for today", fmtHours(&s.Short))
+		shortMessage = "-" + fmtHours(&s.Short)
 	} else {
 		s.Short *= -1
-		shortMessage = fmt.Sprintf("You are %s over for today", fmtHours(&s.Short))
+		shortMessage = fmtHours(&s.Short)
 	}
 
 	fmt.Printf(`
     Month Required Hours: %v
     Month Logged Hours: %v
+    Month Delta: %v
+    Week Logged Hours: %v
 
     Month Billable Hours: %v (%0.1f%%)
     Month NonBillable Hours: %v
@@ -142,6 +157,8 @@ func rootOutputSimple(s rootSummary) error {
 `,
 		fmtHours(&s.RequiredHours),
 		fmtHours(&s.MonthLoggedHours),
+		shortMessage,
+		fmtHours(&s.WeekLoggedHours),
 		fmtHours(&s.BillableHours),
 		100*s.BillableHours/s.MonthLoggedHours,
 		fmtHours(&s.NonBillableHours),
@@ -155,7 +172,7 @@ func rootOutputSimple(s rootSummary) error {
 	}
 
 	fmt.Println()
-	fmt.Println(shortMessage)
+	fmt.Println(shortWeekMessage)
 
 	return nil
 }

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,8 +49,13 @@ or selection (if none provided)`,
 
 		var op harvest.EntryUpdateOptions
 
+		userId, err := getAndSaveUserId(ctx)
+		if err != nil {
+			return err
+		}
+
 		// select entry
-		if op.Entry, err = entriesUpdateGetEntry(args, ctx); err != nil {
+		if op.Entry, err = entriesUpdateGetEntry(args, userId, ctx); err != nil {
 			return err
 		}
 
@@ -152,7 +157,7 @@ func entriesUpdateConfirmEntry(entry harvest.Entry) error {
 	return nil
 }
 
-func entriesUpdateGetEntry(args []string, ctx context.Context) (entry harvest.Entry, err error) {
+func entriesUpdateGetEntry(args []string, userId *int64, ctx context.Context) (entry harvest.Entry, err error) {
 
 	if len(args) > 0 {
 		if entryId, err := strconv.ParseInt(args[0], 10, 64); err != nil {
@@ -166,6 +171,7 @@ func entriesUpdateGetEntry(args []string, ctx context.Context) (entry harvest.En
 		op := &harvest.EntryListOptions{
 			ProjectId: entriesUpdateLastOf.projectId,
 			TaskId:    entriesUpdateLastOf.taskId,
+			UserId:    userId,
 		}
 		entries, err := harvest.GetEntries(op, ctx)
 		if err != nil {

@@ -102,6 +102,20 @@ func writeConfig() error {
 	return nil
 }
 
+func getAndSaveUserId(ctx context.Context) (*int64, error) {
+	if config.Harvest.UserId != nil {
+		return config.Harvest.UserId, nil
+	}
+
+	id, err := harvest.GetCurrentUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	config.Harvest.UserId = id
+	err = writeConfig()
+	return id, err
+}
+
 func getTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
 
 	projects, err := harvest.GetProjects(ctx)

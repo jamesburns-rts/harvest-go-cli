@@ -49,6 +49,7 @@ type (
 		ProjectId *int64
 		TaskId    *int64
 		Running   *bool
+		UserId    *int64
 	}
 
 	EntryUpdateOptions struct {
@@ -76,6 +77,18 @@ type (
 		Notes     *string
 	}
 )
+
+func GetCurrentUserId(ctx context.Context) (*int64, error) {
+	client, err := createClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	u, _, err := client.User.Current(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting current user: %w", err)
+	}
+	return u.ID, nil
+}
 
 func createClient(ctx context.Context) (*harvest.APIClient, error) {
 
@@ -292,10 +305,12 @@ func UpdateEntry(options EntryUpdateOptions, ctx context.Context) (Entry, error)
 	return convertEntry(*entry), err
 }
 
-func GetTimers(o *EntryListOptions, ctx context.Context) (entries []Entry, err error) {
+func GetTimers(o *EntryListOptions, userId *int64, ctx context.Context) (entries []Entry, err error) {
 
 	if o == nil {
-		o = &EntryListOptions{}
+		o = &EntryListOptions{
+			UserId: userId,
+		}
 	}
 	o.Running = BoolPtr(true)
 
@@ -422,6 +437,7 @@ func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 
 	options.ProjectID = o.ProjectId
 	options.IsRunning = o.Running
+	options.UserID = o.UserId
 
 	return options
 }

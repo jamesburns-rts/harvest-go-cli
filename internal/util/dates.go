@@ -20,6 +20,16 @@ func StartOfMonth(t time.Time) time.Time {
 	return time.Date(year, month, 1, 0, 0, 0, 0, t.Location())
 }
 
+func StartOfWeek(t time.Time) time.Time {
+	var delta int
+	if t.Weekday() == time.Sunday {
+		delta = -6
+	} else {
+		delta = -int(t.Weekday() - time.Monday)
+	}
+	return StartOfDay(t.AddDate(0, 0, delta))
+}
+
 // WeekdaysBetween get the total number of workable weekdays in the month
 func WeekdaysBetween(start, stop time.Time) int {
 	if start.After(stop) {

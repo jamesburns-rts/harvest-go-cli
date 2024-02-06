@@ -17,6 +17,7 @@ type (
 		Projects       []ProjectAlias          `yaml,json:"projects"`
 		Tasks          []TaskAlias             `yaml,json:"tasks"`
 		SyncTimers     *bool                   `yaml,json:"syncTimers"`
+		UserId         *int64                  `yaml,json:"userId"`
 	}
 
 	ProjectAlias struct {
