@@ -77,7 +77,7 @@ type (
 	}
 )
 
-func createClient(ctx context.Context) (*harvest.HarvestClient, error) {
+func createClient(ctx context.Context) (*harvest.APIClient, error) {
 
 	props := config.Harvest
 
@@ -95,8 +95,8 @@ func createClient(ctx context.Context) (*harvest.HarvestClient, error) {
 		},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	client := harvest.NewHarvestClient(tc)
-	client.AccountId = props.AccountId
+	client := harvest.NewAPIClient(tc)
+	client.AccountID = props.AccountId
 
 	return client, nil
 }
@@ -180,14 +180,14 @@ func GetProjects(ctx context.Context) (projects []Project, err error) {
 				}
 
 				tasks = append(tasks, Task{
-					ID:        *t.Task.Id,
-					ProjectId: *p.Project.Id,
+					ID:        *t.Task.ID,
+					ProjectId: *p.Project.ID,
 					Name:      *t.Task.Name,
 				})
 			}
 
 			projects = append(projects, Project{
-				ID:         *p.Project.Id,
+				ID:         *p.Project.ID,
 				Name:       *p.Project.Name,
 				ClientName: *p.Client.Name,
 				Billable:   p.Project.IsBillable != nil && *p.Project.IsBillable,
@@ -240,7 +240,7 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 
 		for _, e := range page.TimeEntries {
 
-			if !o.includeTask(e.Task.Id) {
+			if !o.includeTask(e.Task.ID) {
 				continue
 			}
 
@@ -373,23 +373,23 @@ func SubmitWeekUrl(t time.Time, ctx context.Context) (string, error) {
 		return "", errors.Wrap(err, "getting company")
 	}
 
-	return fmt.Sprintf("%s/time/week/%d/%d/%d", *comp.BaseUri, t.Year(), t.Month(), t.Day()), nil
+	return fmt.Sprintf("%s/time/week/%d/%d/%d", *comp.BaseURI, t.Year(), t.Month(), t.Day()), nil
 }
 
 func convertEntry(e harvest.TimeEntry) Entry {
 	entry := Entry{
-		ID:       *e.Id,
+		ID:       *e.ID,
 		Hours:    Hours(*e.Hours),
 		Date:     (*e.SpentDate).String(),
 		Running:  *e.IsRunning,
 		Billable: *e.Billable,
 		Project: Project{
-			ID:   *e.Project.Id,
+			ID:   *e.Project.ID,
 			Name: *e.Project.Name,
 		},
 		Task: Task{
-			ID:        *e.Task.Id,
-			ProjectId: *e.Project.Id,
+			ID:        *e.Task.ID,
+			ProjectId: *e.Project.ID,
 			Name:      *e.Task.Name,
 		},
 	}
@@ -420,7 +420,7 @@ func (o *EntryListOptions) toHarvestOptions() harvest.TimeEntryListOptions {
 		options.From = &harvest.Date{Time: *o.From}
 	}
 
-	options.ProjectId = o.ProjectId
+	options.ProjectID = o.ProjectId
 	options.IsRunning = o.Running
 
 	return options
@@ -436,8 +436,8 @@ func (o LogTimeOptions) toHarvestOptions() harvest.TimeEntryCreateViaDuration {
 	hours := float64(o.Hours)
 
 	return harvest.TimeEntryCreateViaDuration{
-		ProjectId: &o.ProjectId,
-		TaskId:    &o.TaskId,
+		ProjectID: &o.ProjectId,
+		TaskID:    &o.TaskId,
 		SpentDate: &harvest.Date{Time: o.Date},
 		Hours:     &hours,
 		Notes:     notes,
@@ -451,8 +451,8 @@ func (o TimerStartOptions) toHarvestOptions() harvest.TimeEntryCreateViaStartEnd
 	}
 
 	return harvest.TimeEntryCreateViaStartEndTime{
-		ProjectId:   &o.ProjectId,
-		TaskId:      &o.TaskId,
+		ProjectID:   &o.ProjectId,
+		TaskID:      &o.TaskId,
 		SpentDate:   &harvest.Date{Time: startTime},
 		StartedTime: &harvest.Time{Time: startTime},
 		Notes:       o.Notes,
@@ -477,10 +477,10 @@ func (o EntryUpdateOptions) toHarvestOptions() harvest.TimeEntryUpdate {
 	o.Date, _ = util.StringToDate(o.Entry.Date)
 
 	if o.ProjectId != nil {
-		h.ProjectId = o.ProjectId
+		h.ProjectID = o.ProjectId
 	}
 	if o.TaskId != nil {
-		h.TaskId = o.TaskId
+		h.TaskID = o.TaskId
 	}
 	if o.Date != nil {
 		h.SpentDate = &harvest.Date{Time: *o.Date}
