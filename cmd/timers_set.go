@@ -17,12 +17,18 @@ var timersSetAdd hoursArg
 
 var timersSetCmd = &cobra.Command{
 	Use:   "set NAME",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.RangeArgs(1, 2),
 	Short: "Set/alter values of a timer",
 	Long:  `Set/alter values of a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		name := args[0]
+		if len(args) > 1 && timersSetHours.str == "" {
+			if err := timersSetHours.Set(args[1]); err != nil {
+				return err
+			}
+		}
+
 		if timer, ok := timers.Get(name); ok {
 			timer.Notes += timersSetNotes
 

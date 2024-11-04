@@ -15,12 +15,18 @@ var timersMoveHours hoursArg
 var timersMoveCmd = &cobra.Command{
 	Use:     "move ORIGIN DESTINATION",
 	Aliases: []string{"mv"},
-	Args:    cobra.ExactArgs(2),
+	Args:    cobra.RangeArgs(2, 3),
 	Short:   "Move a timer",
 	Long:    `Move a timer`,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		originName, destinationName := args[0], args[1]
+		if len(args) > 2 && timersMoveHours.str == "" {
+			if err := timersMoveHours.Set(args[2]); err != nil {
+				return err
+			}
+		}
+
 		if origin, ok := timers.Get(originName); ok {
 
 			if timersMoveHours.hours != nil {
