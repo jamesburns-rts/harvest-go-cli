@@ -12,11 +12,17 @@ import (
 type Hours float64
 
 func (h Hours) Minutes() float64 {
-	return 60 * (float64(h) - h.Hours())
+	if h >= 0 {
+		return 60 * (float64(h) - h.Hours())
+	}
+	return 60 * (h.Hours() - float64(h))
 }
 
 func (h Hours) Hours() float64 {
-	return math.Floor(float64(h))
+	if h >= 0 {
+		return math.Floor(float64(h))
+	}
+	return math.Ceil(float64(h))
 }
 
 func (h Hours) Duration() time.Duration {

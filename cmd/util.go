@@ -240,7 +240,7 @@ func fmtHours(h *Hours) string {
 		return "n/a"
 	}
 	if config.Cli.TimeDeltaFormat == config.TimeDeltaFormatHuman {
-		if *h < 1 {
+		if *h < 1 && *h > -1 {
 			return fmt.Sprintf("%0.0fm", h.Minutes())
 		} else if h.Minutes() == 0 {
 			return fmt.Sprintf("%0.0fh", h.Hours())
