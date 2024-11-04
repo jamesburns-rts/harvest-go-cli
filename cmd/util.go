@@ -297,3 +297,14 @@ func validAlias(str string) error {
 	}
 	return nil
 }
+
+func ptr[T any](v T) *T {
+	return &v
+}
+
+func ifOr[T any](t bool, a T, b T) T {
+	if t {
+		return a
+	}
+	return b
+}

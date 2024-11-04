@@ -31,6 +31,7 @@ func StartOfWeek(t time.Time) time.Time {
 }
 
 // WeekdaysBetween get the total number of workable weekdays in the month
+// includes start but not stop
 func WeekdaysBetween(start, stop time.Time) int {
 	if start.After(stop) {
 		start, stop = stop, start
@@ -110,6 +111,13 @@ func stringToDateFrom(str string, now time.Time) (date *time.Time, err error) {
 	}
 
 	// if yyyy-mm-dd or something similar
+	if justMonthAndDate.MatchString(str) {
+		year := now.Format("2006")
+		if strings.ContainsRune(str, '-') {
+			year = year + "-"
+		}
+		str = year + str
+	}
 	if validDate.MatchString(str) {
 		str = strings.ReplaceAll(str, "-", "")
 		if t, err := time.ParseInLocation(validDateLayout, str, time.Local); err == nil {
@@ -184,6 +192,7 @@ var dayOfWeekMap = map[string]time.Weekday{
 	"sat": time.Saturday,
 	"sun": time.Sunday,
 }
+var justMonthAndDate = regexp.MustCompile(`^\d{2}-?\d{2}$`)
 var validDate = regexp.MustCompile(`^\d{4}-?\d{2}-?\d{2}$`)
 var validDelta = regexp.MustCompile(`^-?\d+$`)
 
