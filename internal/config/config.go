@@ -43,27 +43,6 @@ type (
 var Harvest HarvestProperties
 var Cli CliProperties
 
-func MigrateAliases() {
-	if len(Harvest.Projects) == 0 && len(Harvest.ProjectAliases) > 0 {
-		for k, p := range Harvest.ProjectAliases {
-			if p.Name == "" {
-				p.Name = k
-			}
-			Harvest.Projects = append(Harvest.Projects, p)
-		}
-	}
-	if len(Harvest.Tasks) == 0 && len(Harvest.TaskAliases) > 0 {
-		for k, t := range Harvest.TaskAliases {
-			if t.Name == "" {
-				t.Name = k
-			}
-			Harvest.Tasks = append(Harvest.Tasks, t)
-		}
-	}
-	Harvest.ProjectAliases = nil
-	Harvest.TaskAliases = nil
-}
-
 func GetTaskAlias(name string) (TaskAlias, bool) {
 	for _, t := range Harvest.Tasks {
 		if t.Name == name {

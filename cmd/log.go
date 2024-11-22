@@ -7,7 +7,6 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -30,18 +29,18 @@ DURATION see root's HOURS section. The task is selected from either TASK, --task
 
 		if len(args) > 0 {
 			if err = logTask.Set(args[0]); err != nil {
-				return errors.Wrap(err, "for [TASK]")
+				return fmt.Errorf("for [TASK]: %w", err)
 			}
 		}
 		if len(args) > 1 {
 			if err = logDuration.Set(args[1]); err != nil {
-				return errors.Wrap(err, "for [DURATION]")
+				return fmt.Errorf("for [DURATION]: %w", err)
 			}
 		}
 
 		if logTimer != "" {
 			if timer, ok := timers.Get(logTimer); !ok {
-				return errors.Errorf("timer %s does not exist", logTimer)
+				return fmt.Errorf("timer %s does not exist", logTimer)
 			} else {
 				if logTask.taskId == nil {
 					logTask.SetId(timer.SyncedTaskId, timer.SyncedProjectId)

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
@@ -11,7 +12,6 @@ import (
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -66,7 +66,7 @@ func createTable(columns []string) *tablewriter.Table {
 func outputJson(v interface{}) error {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		return errors.Wrap(err, "problem marshalling data to json")
+		return fmt.Errorf("problem marshalling data to json: %w", err)
 	}
 	fmt.Println(string(b))
 	return nil
@@ -96,7 +96,7 @@ func writeConfig() error {
 	}
 
 	if err := viper.WriteConfig(); err != nil {
-		return errors.Wrap(err, "problem saving config")
+		return fmt.Errorf("problem saving config: %w", err)
 	}
 
 	return nil
@@ -120,7 +120,7 @@ func getTaskProjectId(taskId int64, ctx context.Context) (*int64, error) {
 
 	projects, err := harvest.GetProjects(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "problem getting projects for taskId")
+		return nil, fmt.Errorf("problem getting projects for taskId: %w", err)
 	}
 	var tasksProjects []harvest.Project
 	for _, p := range projects {
@@ -173,7 +173,7 @@ func selectProjectAndTaskFrom(project, task string, ctx context.Context) (projec
 func selectProjectAndTask(ctx context.Context) (projectId, taskId *int64, err error) {
 	projects, err := harvest.GetProjects(ctx)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "problem getting projects")
+		return nil, nil, fmt.Errorf("problem getting projects: %w", err)
 	}
 	selected, err := prompt.ForSelection("Select Project", projects)
 	if err != nil {
@@ -190,7 +190,7 @@ func selectProjectAndTask(ctx context.Context) (projectId, taskId *int64, err er
 func selectProject(ctx context.Context) (projectId *int64, err error) {
 	projects, err := harvest.GetProjects(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "problem getting projects")
+		return nil, fmt.Errorf("problem getting projects: %w", err)
 	}
 	selected, err := prompt.ForSelection("Select Project", projects)
 	if err != nil {

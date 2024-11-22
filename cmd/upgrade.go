@@ -1,32 +1,16 @@
-/*
-Copyright © 2019 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/antchfx/htmlquery"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/html"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -50,29 +34,29 @@ var upgradeCmd = &cobra.Command{
 		if upgradeDownloadOnly != "" {
 			f, err := os.OpenFile(upgradeDownloadOnly, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 			if err != nil {
-				return errors.Wrap(err, "opening new file")
+				return fmt.Errorf("opening new file: %w", err)
 			}
 			return downloadFile(link, f, ctx)
 
 		} else {
 			newBinary, err := util.TempFile("new-harvest-binary", 0777)
 			if err != nil {
-				return errors.Wrap(err, "cannot create new file")
+				return fmt.Errorf("cannot create new file: %w", err)
 			}
 
 			err = downloadFile(link, newBinary, ctx)
 			if err != nil {
-				return errors.Wrap(err, "downloading new file")
+				return fmt.Errorf("downloading new file: %w", err)
 			}
 
 			orig, err := filepath.Abs(os.Args[0])
 			if err != nil {
-				return errors.Wrap(err, "something is wrong")
+				return fmt.Errorf("something is wrong: %w", err)
 			}
 
 			execute, script, err := writeScript(orig, newBinary.Name())
 			if err != nil {
-				return errors.Wrap(err, "writing script")
+				return fmt.Errorf("writing script: %w", err)
 			}
 			c := exec.Command(execute, script)
 			return c.Start()
@@ -83,25 +67,25 @@ var upgradeCmd = &cobra.Command{
 func downloadFile(link string, destination *os.File, ctx context.Context) error {
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
-		return errors.Wrap(err, "creating latest version request")
+		return fmt.Errorf("creating latest version request: %w", err)
 	}
 	req = req.WithContext(ctx)
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "getting latest version")
+		return fmt.Errorf("getting latest version: %w", err)
 	}
 
 	buff := bytes.Buffer{}
 	size, err := io.Copy(&buff, res.Body)
 	if err != nil {
-		return errors.Wrap(err, "copying to buffer")
+		return fmt.Errorf("copying to buffer: %w", err)
 	}
 
 	reader, err := zip.NewReader(bytes.NewReader(buff.Bytes()), size)
 	if err != nil {
-		return errors.Wrap(err, "extracting zip")
+		return fmt.Errorf("extracting zip: %w", err)
 	}
 
 	if len(reader.File) != 1 {
@@ -110,18 +94,18 @@ func downloadFile(link string, destination *os.File, ctx context.Context) error 
 
 	newBinaryData, err := reader.File[0].Open()
 	if err != nil {
-		return errors.Wrap(err, "can't open downloaded file")
+		return fmt.Errorf("can't open downloaded file: %w", err)
 	}
 
 	if _, err := io.Copy(destination, newBinaryData); err != nil {
-		return errors.Wrap(err, "can't write to new binary")
+		return fmt.Errorf("can't write to new binary: %w", err)
 	}
 
 	return destination.Close()
 }
 
 func writeScript(oldBinary, newBinary string) (execute, script string, err error) {
-	f, err := ioutil.TempFile(os.TempDir(), "harvest-go-cli-upgrade")
+	f, err := os.CreateTemp(os.TempDir(), "harvest-go-cli-upgrade")
 	if err != nil {
 		return
 	}
@@ -153,7 +137,7 @@ func writeScript(oldBinary, newBinary string) (execute, script string, err error
 func getDownloadLink(ctx context.Context) (string, error) {
 	req, err := http.NewRequest("GET", "https://github.com/jamesburns-rts/harvest-go-cli/releases/latest", nil)
 	if err != nil {
-		return "", errors.Wrap(err, "creating latest version request")
+		return "", fmt.Errorf("creating latest version request: %w", err)
 	}
 	req = req.WithContext(ctx)
 
@@ -164,12 +148,12 @@ func getDownloadLink(ctx context.Context) (string, error) {
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		return "", errors.Wrap(err, "getting latest version")
+		return "", fmt.Errorf("getting latest version: %w", err)
 	}
 
 	root, err := html.Parse(res.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "parsing latest version response")
+		return "", fmt.Errorf("parsing latest version response: %w", err)
 	}
 
 	// parse projects

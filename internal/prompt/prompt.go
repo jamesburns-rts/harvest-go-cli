@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -39,7 +40,7 @@ func ForSelection(title string, options interface{}) (int, error) {
 	i, _, err := prompt.Run()
 
 	if err != nil {
-		if err == promptui.ErrInterrupt {
+		if errors.Is(err, promptui.ErrInterrupt) {
 			return 0, util.QuitError
 		}
 	}

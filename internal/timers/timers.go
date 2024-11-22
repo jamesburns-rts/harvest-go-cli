@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"errors"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
-	"github.com/pkg/errors"
 )
 
 type (

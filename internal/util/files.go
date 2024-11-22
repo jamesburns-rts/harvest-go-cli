@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -57,14 +56,13 @@ func isWSL() bool {
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 		return false
 	}
-	data, err := ioutil.ReadFile("/proc/version")
+	data, err := os.ReadFile("/proc/version")
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Unable to read /proc/version.\n")
 		return false
 	}
 	return strings.Contains(strings.ToLower(string(data)), "microsoft")
 }
-
 
 func OpenURL(url string) error {
 	var cmd string

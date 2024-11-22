@@ -1,7 +1,8 @@
 package util
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,7 +15,7 @@ func StartOfDay(t time.Time) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
 
-// StartOfDay gets the time at midnight on the first of the month
+// StartOfMonth StartOfDay gets the time at midnight on the first of the month
 func StartOfMonth(t time.Time) time.Time {
 	year, month, _ := t.Date()
 	return time.Date(year, month, 1, 0, 0, 0, 0, t.Location())
@@ -49,6 +50,8 @@ func WeekdaysBetween(start, stop time.Time) int {
 			fallthrough
 		case time.Friday:
 			totalDays++
+		default:
+			break
 		}
 		start = start.AddDate(0, 0, 1)
 	}
@@ -77,11 +80,6 @@ func StringToDate(str string) (date *time.Time, err error) {
 	return stringToDateFrom(str, time.Now())
 }
 
-// DateOfLastWeekDay Returns the date of the last occurrence of the given weekday
-func DateOfLastWeekDay(weekday time.Weekday) time.Time {
-	return dateOfLastWeekDayFrom(weekday, time.Now())
-}
-
 func dateOfLastWeekDayFrom(weekday time.Weekday, now time.Time) time.Time {
 	t := now.AddDate(0, 0, -1)
 	for t.Weekday() != weekday {
@@ -90,25 +88,15 @@ func dateOfLastWeekDayFrom(weekday time.Weekday, now time.Time) time.Time {
 	return StartOfDay(t)
 }
 
-func stringToDateFrom(str string, now time.Time) (date *time.Time, err error) {
+func stringToDateFrom(str string, now time.Time) (*time.Time, error) {
 	str = strings.TrimSpace(str)
 	str = strings.ToLower(str)
 
 	if str == "" {
-		return nil, err
+		return nil, errors.New("empty string given")
 	}
 
 	now = StartOfDay(now)
-
-	defer func() {
-		if date == nil {
-			err = errors.New("invalid date given [" + str + "]")
-		}
-	}()
-
-	if str == "" {
-		return
-	}
 
 	// if yyyy-mm-dd or something similar
 	if justMonthAndDate.MatchString(str) {
@@ -120,10 +108,11 @@ func stringToDateFrom(str string, now time.Time) (date *time.Time, err error) {
 	}
 	if validDate.MatchString(str) {
 		str = strings.ReplaceAll(str, "-", "")
-		if t, err := time.ParseInLocation(validDateLayout, str, time.Local); err == nil {
-			date = &t
+		t, err := time.ParseInLocation(validDateLayout, str, time.Local)
+		if err != nil {
+			return nil, fmt.Errorf("expecting %s (or with hyphens): %w", validDateLayout, err)
 		}
-		return
+		return &t, nil
 	}
 
 	// check days of week
@@ -157,13 +146,11 @@ func stringToDateFrom(str string, now time.Time) (date *time.Time, err error) {
 	case validDelta.MatchString(str):
 		delta, _ = strconv.ParseInt(str, 10, 64)
 	default:
-		return
+		return nil, fmt.Errorf("unexpected date word: %s", str)
 	}
 
 	t := now.AddDate(0, 0, int(delta))
-	date = &t
-
-	return
+	return &t, nil
 }
 
 func StringToTime(str string) (time.Time, error) {

@@ -1,27 +1,12 @@
-/*
-Copyright © 2019 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"strconv"
 )
@@ -100,7 +85,7 @@ or selection (if none provided)`,
 
 		// update entry
 		if entry, err := harvest.UpdateEntry(op, ctx); err != nil {
-			return errors.Wrap(err, "problem updating entry")
+			return fmt.Errorf("problem updating entry: %w", err)
 		} else {
 			return printWithFormat(outputMap{
 				config.OutputFormatSimple: func() error { return outputSuccess(entry) },
@@ -161,7 +146,7 @@ func entriesUpdateGetEntry(args []string, userId *int64, ctx context.Context) (e
 
 	if len(args) > 0 {
 		if entryId, err := strconv.ParseInt(args[0], 10, 64); err != nil {
-			return entry, errors.Wrap(err, "problem with ENTRY_ID")
+			return entry, fmt.Errorf("problem with ENTRY_ID: %w", err)
 		} else {
 			if entry, err = harvest.GetEntry(entryId, ctx); err != nil {
 				return entry, err

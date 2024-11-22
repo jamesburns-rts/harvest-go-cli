@@ -9,10 +9,10 @@ import (
 
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 
+	"errors"
 	"github.com/becoded/go-harvest/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -167,7 +167,7 @@ func GetProject(projectId int64, ctx context.Context) (Project, error) {
 func GetProjects(ctx context.Context) (projects []Project, err error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating client")
+		return nil, fmt.Errorf("creating client: %w", err)
 	}
 	options := harvest.MyProjectAssignmentListOptions{}
 	options.Page = -1
@@ -176,12 +176,12 @@ func GetProjects(ctx context.Context) (projects []Project, err error) {
 	for options.Page != lastPage {
 		options.Page = options.Page + 1
 
-		page, _, err := client.Project.GetMyProjectAssignments(ctx, &options)
+		page, _, err := client.User.GetMyProjectAssignments(ctx, &options)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for _, p := range page.UserAssignments {
+		for _, p := range page.ProjectAssignments {
 			if !*p.IsActive {
 				continue
 			}
@@ -218,7 +218,7 @@ func GetTasks(projectId *int64, ctx context.Context) (tasks []Task, err error) {
 
 	projects, err := GetProjects(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting projects")
+		return nil, fmt.Errorf("getting projects: %w", err)
 	}
 
 	for _, project := range projects {
@@ -236,7 +236,7 @@ func GetTasks(projectId *int64, ctx context.Context) (tasks []Task, err error) {
 func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating client")
+		return nil, fmt.Errorf("creating client: %w", err)
 	}
 
 	options := o.toHarvestOptions()
@@ -269,7 +269,7 @@ func GetEntries(o *EntryListOptions, ctx context.Context) (entries []Entry, err 
 func GetEntry(entryId int64, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating client")
+		return Entry{}, fmt.Errorf("creating client: %w", err)
 	}
 
 	entry, _, err := client.Timesheet.Get(ctx, entryId)
@@ -283,7 +283,7 @@ func GetEntry(entryId int64, ctx context.Context) (Entry, error) {
 func DeleteEntry(entryId int64, ctx context.Context) error {
 	client, err := createClient(ctx)
 	if err != nil {
-		return errors.Wrap(err, "creating client")
+		return fmt.Errorf("creating client: %w", err)
 	}
 
 	_, err = client.Timesheet.DeleteTimeEntry(ctx, entryId)
@@ -293,41 +293,29 @@ func DeleteEntry(entryId int64, ctx context.Context) error {
 func UpdateEntry(options EntryUpdateOptions, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating client")
+		return Entry{}, fmt.Errorf("creating client: %w", err)
 	}
 
 	harvestOptions := options.toHarvestOptions()
 
 	entry, _, err := client.Timesheet.UpdateTimeEntry(ctx, options.Entry.ID, &harvestOptions)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "updating entry")
+		return Entry{}, fmt.Errorf("updating entry: %w", err)
 	}
 	return convertEntry(*entry), err
-}
-
-func GetTimers(o *EntryListOptions, userId *int64, ctx context.Context) (entries []Entry, err error) {
-
-	if o == nil {
-		o = &EntryListOptions{
-			UserId: userId,
-		}
-	}
-	o.Running = BoolPtr(true)
-
-	return GetEntries(o, ctx)
 }
 
 func StartTimerEntry(o TimerStartOptions, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating client")
+		return Entry{}, fmt.Errorf("creating client: %w", err)
 	}
 
 	options := o.toHarvestOptions()
 
 	entry, _, err := client.Timesheet.CreateTimeEntryViaStartEndTime(ctx, &options)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating time entry")
+		return Entry{}, fmt.Errorf("creating time entry: %w", err)
 	}
 
 	return convertEntry(*entry), nil
@@ -336,12 +324,12 @@ func StartTimerEntry(o TimerStartOptions, ctx context.Context) (Entry, error) {
 func StopTimerEntry(entryId int64, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating client")
+		return Entry{}, fmt.Errorf("creating client: %w", err)
 	}
 
 	entry, _, err := client.Timesheet.StopTimeEntry(ctx, entryId)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "stopping time entry")
+		return Entry{}, fmt.Errorf("stopping time entry: %w", err)
 	}
 
 	return convertEntry(*entry), nil
@@ -350,14 +338,14 @@ func StopTimerEntry(entryId int64, ctx context.Context) (Entry, error) {
 func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating client")
+		return Entry{}, fmt.Errorf("creating client: %w", err)
 	}
 
 	options := o.toHarvestOptions()
 
 	entry, _, err := client.Timesheet.CreateTimeEntryViaDuration(ctx, &options)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating time entry")
+		return Entry{}, fmt.Errorf("creating time entry: %w", err)
 	}
 
 	return convertEntry(*entry), nil
@@ -366,12 +354,12 @@ func LogTime(o LogTimeOptions, ctx context.Context) (Entry, error) {
 func RestartTimeEntry(timeEntryId int64, ctx context.Context) (Entry, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "creating client")
+		return Entry{}, fmt.Errorf("creating client: %w", err)
 	}
 
 	entry, _, err := client.Timesheet.RestartTimeEntry(ctx, timeEntryId)
 	if err != nil {
-		return Entry{}, errors.Wrap(err, "restarting time entry")
+		return Entry{}, fmt.Errorf("restarting time entry: %w", err)
 	}
 
 	return convertEntry(*entry), nil
@@ -380,12 +368,12 @@ func RestartTimeEntry(timeEntryId int64, ctx context.Context) (Entry, error) {
 func SubmitWeekUrl(t time.Time, ctx context.Context) (string, error) {
 	client, err := createClient(ctx)
 	if err != nil {
-		return "", errors.Wrap(err, "creating client")
+		return "", fmt.Errorf("creating client: %w", err)
 	}
 
 	comp, _, err := client.Company.Get(ctx)
 	if err != nil {
-		return "", errors.Wrap(err, "getting company")
+		return "", fmt.Errorf("getting company: %w", err)
 	}
 
 	return fmt.Sprintf("%s/time/week/%d/%d/%d", *comp.BaseURI, t.Year(), t.Month(), t.Day()), nil

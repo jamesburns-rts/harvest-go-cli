@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"time"
 )

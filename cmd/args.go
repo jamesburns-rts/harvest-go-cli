@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"errors"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
 	. "github.com/jamesburns-rts/harvest-go-cli/internal/types"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
-	"github.com/pkg/errors"
 	"strconv"
 	"time"
 )

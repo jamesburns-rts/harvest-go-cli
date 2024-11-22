@@ -1,5 +1,5 @@
 package util
 
-import "github.com/pkg/errors"
+import "errors"
 
 var QuitError = errors.New("^C")
