@@ -26,8 +26,9 @@ type sumEntry struct {
 }
 
 var sumCmd = &cobra.Command{
-	Use:   "sum [PROJECT]",
-	Short: "Totals hours for a project or task, broken up by task",
+	Use:               "sum [PROJECT]",
+	Short:             "Totals hours for a project or task, broken up by task",
+	ValidArgsFunction: projectCompletionFunc,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		var sumProject projectArg
@@ -112,6 +113,8 @@ func init() {
 	sumCmd.Flags().VarP(&sumTask, "task", "t", "Task ID/alias by which to filter")
 	sumCmd.Flags().Var(&sumToDate, "to", "Date by which to filter by entries on or before [see date section in root]")
 	sumCmd.Flags().Var(&sumFromDate, "from", "Date by which to filter by entries on or after [see date section in root]")
+
+	_ = sumCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }
 
 func sumOutputSimple(sums []sumEntry) error {

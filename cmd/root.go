@@ -199,8 +199,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, "config file (default is $HOME/.harvest.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", fmt.Sprintf(
 		"Format of output [%s]", strings.Join(config.OutputFormatOptions, ", ")))
-	//_ = cobra.MarkFlagCustom(rootCmd.PersistentFlags(), "format", "_custom_method")
 	rootCmd.Flags().BoolVarP(&rootVersion, "version", "v", false, "Print the version of the application")
+
+	_ = rootCmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return config.OutputFormatOptions, cobra.ShellCompDirectiveNoFileComp
+	})
 }
 
 // initConfig reads in config file and ENV variables if set.

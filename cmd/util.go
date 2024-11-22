@@ -308,3 +308,50 @@ func ifOr[T any](t bool, a T, b T) T {
 	}
 	return b
 }
+
+type timerCompletionOptions struct {
+	pos               int
+	excludeRunning    bool
+	excludeNotRunning bool
+}
+
+func timerCompletionFunc(opt timerCompletionOptions) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > opt.pos {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		var timerNames []string
+		for _, t := range timers.Records.Timers {
+			if opt.excludeRunning && t.Running {
+				continue
+			}
+			if opt.excludeNotRunning && !t.Running {
+				continue
+			}
+			timerNames = append(timerNames, t.Name)
+		}
+		return timerNames, cobra.ShellCompDirectiveNoFileComp
+	}
+}
+
+func projectCompletionFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	var aliases []string
+	for _, p := range config.Harvest.Projects {
+		aliases = append(aliases, p.Name)
+	}
+	return aliases, cobra.ShellCompDirectiveNoFileComp
+}
+
+func taskCompletionFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	var aliases []string
+	for _, p := range config.Harvest.Tasks {
+		aliases = append(aliases, p.Name)
+	}
+	return aliases, cobra.ShellCompDirectiveNoFileComp
+}

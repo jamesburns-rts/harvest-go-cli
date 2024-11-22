@@ -26,8 +26,9 @@ type weeklyEntry struct {
 }
 
 var weeklyCmd = &cobra.Command{
-	Use:   "weekly [PROJECT]",
-	Short: "Totals hours for a project or task per week",
+	Use:               "weekly [PROJECT]",
+	Short:             "Totals hours for a project or task per week",
+	ValidArgsFunction: projectCompletionFunc,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
 
 		var sumProject projectArg
@@ -109,6 +110,8 @@ func init() {
 	weeklyCmd.Flags().Var(&weeklyFromDate, "from", "Date by which to filter by entries on or after [see date section in root]")
 	weeklyCmd.Flags().BoolVar(&weeklyBillableOnly, "billable-only", false, "Only include billable entries")
 	weeklyCmd.Flags().Var(&weeklyExpected, "expected", "Number of hours per week you're supposed to work - shows an extra total")
+
+	_ = weeklyCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }
 
 func calculateExpectedWeeklyTotalHours(weeks []weeklyEntry) *Hours {

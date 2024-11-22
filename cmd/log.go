@@ -169,4 +169,7 @@ func init() {
 	logCmd.Flags().VarP(&logDuration, "hours", "H", "Set the duration for the entry")
 	logCmd.Flags().BoolVarP(&logConfirm, "confirm", "c", false, "Confirm all the values before logging")
 	logCmd.Flags().StringVarP(&logTimer, "timer", "T", "", "Get data from timer while creating record")
+
+	_ = logCmd.RegisterFlagCompletionFunc("project", projectCompletionFunc)
+	_ = logCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }

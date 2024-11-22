@@ -18,6 +18,12 @@ var timersMoveCmd = &cobra.Command{
 	Args:    cobra.RangeArgs(2, 3),
 	Short:   "Move a timer",
 	Long:    `Move a timer`,
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return timerCompletionFunc(timerCompletionOptions{})(cmd, args, toComplete)
+		}
+		return timerCompletionFunc(timerCompletionOptions{pos: 1})(cmd, args, toComplete)
+	},
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		originName, destinationName := args[0], args[1]

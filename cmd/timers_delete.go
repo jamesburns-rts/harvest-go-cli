@@ -11,10 +11,11 @@ import (
 )
 
 var timersDeleteCmd = &cobra.Command{
-	Use:   "delete NAME",
-	Args:  cobra.MinimumNArgs(1),
-	Short: "Delete a timer",
-	Long:  `Delete a timer`,
+	Use:               "delete NAME",
+	Args:              cobra.MinimumNArgs(1),
+	Short:             "Delete a timer",
+	Long:              `Delete a timer`,
+	ValidArgsFunction: timerCompletionFunc(timerCompletionOptions{}),
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 		for _, name := range args {
 			if t, ok := timers.Get(name); ok {

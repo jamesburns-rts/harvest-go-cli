@@ -14,10 +14,11 @@ var timersStopHours hoursArg
 var timersStopNotes string
 
 var timersStopCmd = &cobra.Command{
-	Use:   "stop NAME",
-	Args:  cobra.ExactArgs(1),
-	Short: "Stop a timer",
-	Long:  `Stop a timer`,
+	Use:               "stop NAME",
+	Args:              cobra.ExactArgs(1),
+	Short:             "Stop a timer",
+	Long:              `Stop a timer`,
+	ValidArgsFunction: timerCompletionFunc(timerCompletionOptions{excludeNotRunning: true}),
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 		return timersStop(args[0], timersStopHours, timersStopNotes, ctx)
 

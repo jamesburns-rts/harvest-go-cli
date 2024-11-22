@@ -17,10 +17,11 @@ var timersStartNotes string
 var timersStartHours hoursArg
 
 var timersStartCmd = &cobra.Command{
-	Use:   "start NAME",
-	Args:  cobra.ExactArgs(1),
-	Short: "Start a timer",
-	Long:  `Start a timer`,
+	Use:               "start NAME",
+	Args:              cobra.ExactArgs(1),
+	Short:             "Start a timer",
+	Long:              `Start a timer`,
+	ValidArgsFunction: timerCompletionFunc(timerCompletionOptions{excludeRunning: true}),
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 		return timersStart(args[0], timersStartNotes, timersStartTask, timersStartEntryId, timersStartHours, ctx)
 	}),
@@ -90,4 +91,5 @@ func init() {
 	timersStartCmd.Flags().StringVarP(&timersStartNotes, "notes", "n", "", "Append notes to the timer")
 	timersStartCmd.Flags().VarP(&timersStartHours, "hours", "H",
 		"Start the timer with the given hours already clocked (or appended)")
+	_ = timersStartCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }

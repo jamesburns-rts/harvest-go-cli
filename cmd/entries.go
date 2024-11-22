@@ -95,4 +95,7 @@ func init() {
 	entriesCmd.Flags().VarP(&entriesTask, "task", "t", "Task ID/alias by which to filter")
 	entriesCmd.Flags().Var(&entriesToDate, "to", "Date by which to filter by entries on or before [see date section in root]")
 	entriesCmd.Flags().Var(&entriesFromDate, "from", "Date by which to filter by entries on or after [see date section in root]")
+
+	_ = entriesCmd.RegisterFlagCompletionFunc("project", projectCompletionFunc)
+	_ = entriesCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }

@@ -110,6 +110,9 @@ func init() {
 	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateLast, "last", false, "Update last time entry")
 	entriesUpdateCmd.Flags().VarP(&entriesUpdateLastOf, "last-of", "l", "Update last time entry of given task")
 	entriesUpdateCmd.Flags().BoolVar(&entriesUpdateClearNotes, "clear-notes", false, "Set the notes to empty")
+
+	_ = entriesUpdateCmd.RegisterFlagCompletionFunc("project", projectCompletionFunc)
+	_ = entriesUpdateCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }
 
 func entriesUpdateConfirmEntry(entry harvest.Entry) error {

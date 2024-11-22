@@ -128,4 +128,6 @@ func init() {
 	tasksAliasCmd.Flags().Int64VarP(&tasksAliasTaskId, "task", "t", -1, "Task ID the task is for")
 	tasksAliasCmd.Flags().VarP(&tasksAliasNotes, "default-notes", "n", "Default notes to use when logging time")
 	tasksAliasCmd.Flags().VarP(&tasksAliasDuration, "default-hours", "H", "Default duration to use when logging time")
+
+	_ = tasksAliasCmd.RegisterFlagCompletionFunc("project", projectCompletionFunc)
 }

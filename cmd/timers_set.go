@@ -16,10 +16,11 @@ var timersSetHours hoursArg
 var timersSetAdd hoursArg
 
 var timersSetCmd = &cobra.Command{
-	Use:   "set NAME",
-	Args:  cobra.RangeArgs(1, 2),
-	Short: "Set/alter values of a timer",
-	Long:  `Set/alter values of a timer`,
+	Use:               "set NAME",
+	Args:              cobra.RangeArgs(1, 2),
+	Short:             "Set/alter values of a timer",
+	Long:              `Set/alter values of a timer`,
+	ValidArgsFunction: timerCompletionFunc(timerCompletionOptions{}),
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		name := args[0]
@@ -77,4 +78,6 @@ func init() {
 	timersSetCmd.Flags().StringVarP(&timersSetNotes, "notes", "n", "", "Append notes to the timer")
 	timersSetCmd.Flags().VarP(&timersSetHours, "hours", "H", "Set the duration of the timer")
 	timersSetCmd.Flags().VarP(&timersSetAdd, "add", "a", "Add a duration (or negative duration) to the timer")
+
+	_ = timersSetCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }

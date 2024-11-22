@@ -13,10 +13,11 @@ var timersSwitchNotes string
 var timersSwitchHours hoursArg
 
 var timersSwitchCmd = &cobra.Command{
-	Use:   "switch NAME",
-	Args:  cobra.MaximumNArgs(1),
-	Short: "Switch a timer",
-	Long:  `Switch a timer`,
+	Use:               "switch NAME",
+	Args:              cobra.MaximumNArgs(1),
+	Short:             "Switch a timer",
+	Long:              `Switch a timer`,
+	ValidArgsFunction: timerCompletionFunc(timerCompletionOptions{}),
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
 		name := ""
@@ -53,4 +54,6 @@ func init() {
 	timersSwitchCmd.Flags().StringVarP(&timersSwitchNotes, "notes", "n", "", "Append notes to the timer")
 	timersSwitchCmd.Flags().VarP(&timersSwitchHours, "hours", "H",
 		"Start/stop the timer with the given hours appended")
+
+	_ = timersSwitchCmd.RegisterFlagCompletionFunc("task", taskCompletionFunc)
 }
