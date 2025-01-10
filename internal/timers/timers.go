@@ -56,7 +56,8 @@ func Get(name string) (Timer, bool) {
 func Delete(name string) {
 	for i, t := range Records.Timers {
 		if t.Name == name {
-			Records.Timers = append(Records.Timers[:i], Records.Timers[i+1:]...)
+			Records.Timers[i] = Records.Timers[len(Records.Timers)-1]
+			Records.Timers = Records.Timers[:len(Records.Timers)-1]
 			return
 		}
 	}

@@ -13,14 +13,13 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"path"
-	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
 
 var cfgFile string
 var outputFormat string
-var rootVersion bool
 
 type rootSummary struct {
 	harvest.MonthSummary
@@ -58,11 +57,6 @@ Inputs of date type can be a few formats:
  - 'yest[erday]: Date of the day before today
 `,
 	Run: withCtx(func(cmd *cobra.Command, args []string, ctx context.Context) (err error) {
-
-		if rootVersion {
-			fmt.Println("v0.9.6")
-			return nil
-		}
 
 		userId, err := getAndSaveUserId(ctx)
 		if err != nil {
@@ -181,15 +175,8 @@ func rootOutputTable(s rootSummary) error {
 	return nil
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-
-	rootCmd.Use = filepath.Base(os.Args[0])
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+func CreateCommand() *cobra.Command {
+	return rootCmd
 }
 
 func init() {
@@ -199,7 +186,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, "config file (default is $HOME/.harvest.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", fmt.Sprintf(
 		"Format of output [%s]", strings.Join(config.OutputFormatOptions, ", ")))
-	rootCmd.Flags().BoolVarP(&rootVersion, "version", "v", false, "Print the version of the application")
 
 	_ = rootCmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return config.OutputFormatOptions, cobra.ShellCompDirectiveNoFileComp
@@ -241,7 +227,8 @@ func initConfig() {
 	timers.Records = conf.Timers
 
 	// clear old timers
-	for _, v := range timers.Records.Timers {
+	oldTimers := slices.Clone(timers.Records.Timers)
+	for _, v := range oldTimers {
 		if !util.SameDay(v.StartedTime(), time.Now()) {
 			timers.Delete(v.Name)
 		}
