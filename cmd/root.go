@@ -4,6 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path"
+	"slices"
+	"strings"
+	"time"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/timers"
@@ -11,11 +17,6 @@ import (
 	"github.com/jamesburns-rts/harvest-go-cli/internal/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
-	"path"
-	"slices"
-	"strings"
-	"time"
 )
 
 var cfgFile string
@@ -156,7 +157,7 @@ func rootOutputSimple(s rootSummary) error {
 }
 func rootOutputTable(s rootSummary) error {
 	table := createTable(nil)
-	table.AppendBulk([][]string{
+	_ = table.Append([][]string{
 		{"Month Required Hours", fmtHours(&s.RequiredHours)},
 		{"Month Logged Hours", fmtHours(&s.MonthLoggedHours)},
 		{"Month Billable Hours", fmt.Sprintf("%v (%0.1f%%)", s.BillableHours, 100*s.BillableHours/s.MonthLoggedHours)},
@@ -165,7 +166,7 @@ func rootOutputTable(s rootSummary) error {
 		{"Logged today", fmtHours(&s.TodayLoggedHours)},
 		{"Hours to go", fmtHours(&s.Short)},
 	})
-	table.Render()
+	_ = table.Render()
 
 	if len(timers.Records.Timers) > 0 {
 		fmt.Println("Timers:")

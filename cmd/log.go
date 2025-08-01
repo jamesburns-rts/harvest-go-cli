@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
@@ -154,8 +155,8 @@ func outputSuccess(entry harvest.Entry) error {
 
 func outputEntryTable(entry harvest.Entry) error {
 	table := createTable([]string{"Key", "Value"})
-	table.AppendBulk(entryOutputRows(entry))
-	table.Render()
+	_ = table.Append(entryOutputRows(entry))
+	_ = table.Render()
 	return nil
 }
 

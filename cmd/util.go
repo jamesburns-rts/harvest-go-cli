@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
+	"strings"
+
 	"github.com/jamesburns-rts/harvest-go-cli/internal/config"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/harvest"
 	"github.com/jamesburns-rts/harvest-go-cli/internal/prompt"
@@ -14,9 +18,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
-	"os/signal"
-	"strings"
 )
 
 type CobraFunc func(cmd *cobra.Command, args []string)
@@ -56,9 +57,11 @@ func withCtx(f CobraFuncWithCtx) CobraFunc {
 // createTable utility to create table with common properties across project
 func createTable(columns []string) *tablewriter.Table {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetColWidth(150)
+	table.Configure(func(cfg *tablewriter.Config) {
+		cfg.Widths.Global = 150
+	})
 	if columns != nil {
-		table.SetHeader(columns)
+		table.Header(columns)
 	}
 	return table
 }
