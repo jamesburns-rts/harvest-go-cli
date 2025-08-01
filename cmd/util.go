@@ -61,7 +61,12 @@ func createTable(columns []string) *tablewriter.Table {
 		cfg.Widths.Global = 150
 	})
 	if columns != nil {
-		table.Header(columns)
+		// annoying
+		anyColumns := make([]any, len(columns))
+		for i, column := range columns {
+			anyColumns[i] = column
+		}
+		table.Header(anyColumns...)
 	}
 	return table
 }

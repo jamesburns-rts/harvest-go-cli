@@ -157,7 +157,7 @@ func rootOutputSimple(s rootSummary) error {
 }
 func rootOutputTable(s rootSummary) error {
 	table := createTable(nil)
-	_ = table.Append([][]string{
+	rows := [][]string{
 		{"Month Required Hours", fmtHours(&s.RequiredHours)},
 		{"Month Logged Hours", fmtHours(&s.MonthLoggedHours)},
 		{"Month Billable Hours", fmt.Sprintf("%v (%0.1f%%)", s.BillableHours, 100*s.BillableHours/s.MonthLoggedHours)},
@@ -165,7 +165,10 @@ func rootOutputTable(s rootSummary) error {
 		{"Time worked", fmtHours(s.WorkedTodayHours)},
 		{"Logged today", fmtHours(&s.TodayLoggedHours)},
 		{"Hours to go", fmtHours(&s.Short)},
-	})
+	}
+	for _, row := range rows {
+		_ = table.Append(row)
+	}
 	_ = table.Render()
 
 	if len(timers.Records.Timers) > 0 {

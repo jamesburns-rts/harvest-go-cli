@@ -155,7 +155,9 @@ func outputSuccess(entry harvest.Entry) error {
 
 func outputEntryTable(entry harvest.Entry) error {
 	table := createTable([]string{"Key", "Value"})
-	_ = table.Append(entryOutputRows(entry))
+	for _, row := range entryOutputRows(entry) {
+		_ = table.Append(row)
+	}
 	_ = table.Render()
 	return nil
 }
